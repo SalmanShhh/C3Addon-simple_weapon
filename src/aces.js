@@ -1,68 +1,801 @@
 import { action, condition, expression } from "../template/aceDefine.js";
 
-const category = "Aces_In_Single_File";
+// ============================================
+// FIRING CATEGORY
+// ============================================
+const firing = "Firing";
 
 action(
-  category,
-  "SampleAction",
+  firing,
+  "Fire",
+  {
+    highlight: true,
+    deprecated: false,
+    isAsync: false,
+    listName: "Fire",
+    displayText: "{my}: Fire weapon",
+    description: "Fire the weapon (respects fire mode, ammo, and cooldown)",
+    params: [],
+  },
+  function () {
+    this.fire();
+  }
+);
+
+action(
+  firing,
+  "SetFireMode",
   {
     highlight: false,
     deprecated: false,
     isAsync: false,
-    listName: "Sample Action",
-    displayText: "Sample Action {0}",
-    description: "This is a sample action",
+    listName: "Set fire mode",
+    displayText: "{my}: Set fire mode to {0}",
+    description: "Set the weapon's fire mode",
     params: [
       {
-        id: "param1",
-        name: "Param1",
-        desc: "This is a sample param",
-        type: "string",
-        initialValue: '"Hello World"',
+        id: "mode",
+        name: "Fire Mode",
+        desc: "The fire mode to set",
+        type: "combo",
+        initialValue: "single",
+        items: [
+          { single: "Single Shot" },
+          { automatic: "Automatic" },
+          { burst: "Burst Fire" },
+        ],
       },
     ],
   },
-  function (param) {
-    console.log(param);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log("Sample Action");
-        resolve();
-      }, 1000);
-    });
+  function (mode) {
+    this.setFireMode(mode);
+  }
+);
+
+action(
+  firing,
+  "SetFireRate",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set fire rate",
+    displayText: "{my}: Set fire rate to {0} seconds",
+    description: "Set the time between shots in seconds",
+    params: [
+      {
+        id: "rate",
+        name: "Fire Rate",
+        desc: "Time between shots in seconds",
+        type: "number",
+        initialValue: "0.1",
+      },
+    ],
+  },
+  function (rate) {
+    this._fireRate = rate;
+  }
+);
+
+action(
+  firing,
+  "SetSpreadAngle",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set spread angle",
+    displayText: "{my}: Set spread angle to {0} degrees",
+    description: "Set the random spread angle in degrees",
+    params: [
+      {
+        id: "angle",
+        name: "Spread Angle",
+        desc: "Spread angle in degrees",
+        type: "number",
+        initialValue: "0",
+      },
+    ],
+  },
+  function (angle) {
+    this._spreadAngle = angle;
+  }
+);
+
+action(
+  firing,
+  "SetBurstCount",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set burst count",
+    displayText: "{my}: Set burst count to {0}",
+    description: "Set the number of shots in burst fire mode",
+    params: [
+      {
+        id: "count",
+        name: "Burst Count",
+        desc: "Number of shots per burst",
+        type: "number",
+        initialValue: "3",
+      },
+    ],
+  },
+  function (count) {
+    this._burstCount = Math.max(1, Math.floor(count));
+  }
+);
+
+action(
+  firing,
+  "SetImagePoint",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set image point",
+    displayText: "{my}: Set spawn image point to {0}",
+    description: "Set the image point index for projectile spawning",
+    params: [
+      {
+        id: "imagePoint",
+        name: "Image Point",
+        desc: "Image point index (0 = origin)",
+        type: "number",
+        initialValue: "0",
+      },
+    ],
+  },
+  function (imagePoint) {
+    this._imagePoint = Math.max(0, Math.floor(imagePoint));
   }
 );
 
 condition(
-  category,
-  "SampleCondition",
+  firing,
+  "CanFire",
   {
-    highlight: false,
+    highlight: true,
     deprecated: false,
-    listName: "Sample Condition",
-    displayText: "Sample Condition",
-    description: "This is a sample condition",
+    isTrigger: false,
+    isInvertible: true,
+    listName: "Can fire",
+    displayText: "{my}: Can fire",
+    description: "True if the weapon can fire (has ammo, not reloading, cooldown elapsed)",
     params: [],
   },
   function () {
-    console.log("Sample Condition");
+    return this.canFire();
+  }
+);
+
+condition(
+  firing,
+  "OnFire",
+  {
+    highlight: true,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On fire",
+    displayText: "{my}: On fire",
+    description: "Triggered when the weapon fires a shot",
+    params: [],
+  },
+  function () {
+    return true;
+  }
+);
+
+condition(
+  firing,
+  "CompareFireMode",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: true,
+    listName: "Compare fire mode",
+    displayText: "{my}: Fire mode is {0}",
+    description: "Check if the weapon is in a specific fire mode",
+    params: [
+      {
+        id: "mode",
+        name: "Fire Mode",
+        desc: "The fire mode to compare",
+        type: "combo",
+        initialValue: "single",
+        items: [
+          { single: "Single Shot" },
+          { automatic: "Automatic" },
+          { burst: "Burst Fire" },
+        ],
+      },
+    ],
+  },
+  function (mode) {
+    return this.getFireModeString() === mode;
+  }
+);
+
+expression(
+  firing,
+  "FireRate",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the fire rate (time between shots in seconds)",
+    params: [],
+  },
+  function () {
+    return this._fireRate;
+  }
+);
+
+expression(
+  firing,
+  "SpreadAngle",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the spread angle in degrees",
+    params: [],
+  },
+  function () {
+    return this._spreadAngle;
+  }
+);
+
+expression(
+  firing,
+  "FireMode",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "string",
+    description: "Get the current fire mode (\"single\", \"automatic\", or \"burst\")",
+    params: [],
+  },
+  function () {
+    return this.getFireModeString();
+  }
+);
+
+expression(
+  firing,  "BurstCount",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the number of shots in burst fire mode",
+    params: [],
+  },
+  function () {
+    return this._burstCount;
+  }
+);
+
+expression(
+  firing,  "ImagePoint",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the image point index for projectile spawning",
+    params: [],
+  },
+  function () {
+    return this._imagePoint;
+  }
+);
+
+expression(
+  firing,
+  "SpawnX",
+  {
+    highlight: true,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the X position for spawning projectiles (at image point)",
+    params: [],
+  },
+  function () {
+    return this.getSpawnPosition().x;
+  }
+);
+
+expression(
+  firing,
+  "SpawnY",
+  {
+    highlight: true,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the Y position for spawning projectiles (at image point)",
+    params: [],
+  },
+  function () {
+    return this.getSpawnPosition().y;
+  }
+);
+
+expression(
+  firing,
+  "SpawnAngle",
+  {
+    highlight: true,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the angle for spawning projectiles (with spread applied, in degrees)",
+    params: [],
+  },
+  function () {
+    return this.getSpawnPosition().angle * (180 / Math.PI);
+  }
+);
+
+// ============================================
+// AMMO CATEGORY
+// ============================================
+const ammo = "Ammo";
+
+action(
+  ammo,
+  "SetCurrentAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set current ammo",
+    displayText: "{my}: Set current ammo to {0}",
+    description: "Set the current ammunition count",
+    params: [
+      {
+        id: "ammo",
+        name: "Ammo",
+        desc: "The ammo count to set",
+        type: "number",
+        initialValue: "30",
+      },
+    ],
+  },
+  function (ammoCount) {
+    this._currentAmmo = Math.max(0, Math.min(ammoCount, this._maxAmmo));
+  }
+);
+
+action(
+  ammo,
+  "SetMaxAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set max ammo",
+    displayText: "{my}: Set max ammo to {0}",
+    description: "Set the maximum ammunition capacity",
+    params: [
+      {
+        id: "maxAmmo",
+        name: "Max Ammo",
+        desc: "The maximum ammo capacity",
+        type: "number",
+        initialValue: "30",
+      },
+    ],
+  },
+  function (maxAmmo) {
+    this._maxAmmo = Math.max(1, maxAmmo);
+    this._currentAmmo = Math.min(this._currentAmmo, this._maxAmmo);
+  }
+);
+
+action(
+  ammo,
+  "AddAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Add ammo",
+    displayText: "{my}: Add {0} ammo",
+    description: "Add ammunition to current count (capped at max)",
+    params: [
+      {
+        id: "amount",
+        name: "Amount",
+        desc: "Amount of ammo to add",
+        type: "number",
+        initialValue: "10",
+      },
+    ],
+  },
+  function (amount) {
+    this._currentAmmo = Math.min(this._currentAmmo + amount, this._maxAmmo);
+  }
+);
+
+action(
+  ammo,
+  "SubtractAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Subtract ammo",
+    displayText: "{my}: Subtract {0} ammo",
+    description: "Subtract ammunition from current count",
+    params: [
+      {
+        id: "amount",
+        name: "Amount",
+        desc: "Amount of ammo to subtract",
+        type: "number",
+        initialValue: "1",
+      },
+    ],
+  },
+  function (amount) {
+    this._currentAmmo = Math.max(0, this._currentAmmo - amount);
+  }
+);
+
+condition(
+  ammo,
+  "HasAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: true,
+    listName: "Has ammo",
+    displayText: "{my}: Has ammo",
+    description: "True if the weapon has at least 1 ammo",
+    params: [],
+  },
+  function () {
+    return this._currentAmmo > 0;
+  }
+);
+
+condition(
+  ammo,
+  "CompareCurrentAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: false,
+    listName: "Compare current ammo",
+    displayText: "{my}: Current ammo {0} {1}",
+    description: "Compare the current ammo count",
+    params: [
+      {
+        id: "comparison",
+        name: "Comparison",
+        desc: "How to compare",
+        type: "cmp",
+      },
+      {
+        id: "value",
+        name: "Value",
+        desc: "Value to compare to",
+        type: "number",
+        initialValue: "0",
+      },
+    ],
+  },
+  function (cmp, value) {
+    const runtime = this._getRuntime();
+    if (runtime) {
+      return runtime.compareValues(this._currentAmmo, cmp, value);
+    }
+    return false;
+  }
+);
+
+condition(
+  ammo,
+  "OnEmpty",
+  {
+    highlight: true,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On empty",
+    displayText: "{my}: On empty",
+    description: "Triggered when trying to fire with no ammo",
+    params: [],
+  },
+  function () {
+    return true;
+  }
+);
+
+condition(
+  ammo,
+  "IsFull",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: true,
+    listName: "Is ammo full",
+    displayText: "{my}: Ammo is full",
+    description: "True if current ammo equals max ammo",
+    params: [],
+  },
+  function () {
+    return this._currentAmmo >= this._maxAmmo;
+  }
+);
+
+expression(
+  ammo,
+  "CurrentAmmo",
+  {
+    highlight: true,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the current ammunition count",
+    params: [],
+  },
+  function () {
+    return this._currentAmmo;
+  }
+);
+
+expression(
+  ammo,
+  "MaxAmmo",
+  {
+    highlight: true,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the maximum ammunition capacity",
+    params: [],
+  },
+  function () {
+    return this._maxAmmo;
+  }
+);
+
+expression(
+  ammo,
+  "AmmoPercent",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get ammo as a percentage (0-100)",
+    params: [],
+  },
+  function () {
+    if (this._maxAmmo <= 0) return 0;
+    return (this._currentAmmo / this._maxAmmo) * 100;
+  }
+);
+
+// ============================================
+// RELOAD CATEGORY
+// ============================================
+const reload = "Reload";
+
+action(
+  reload,
+  "Reload",
+  {
+    highlight: true,
+    deprecated: false,
+    isAsync: false,
+    listName: "Start reload",
+    displayText: "{my}: Start reload",
+    description: "Start reloading the weapon",
+    params: [],
+  },
+  function () {
+    this.startReload();
+  }
+);
+
+action(
+  reload,
+  "CancelReload",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Cancel reload",
+    displayText: "{my}: Cancel reload",
+    description: "Cancel the current reload",
+    params: [],
+  },
+  function () {
+    this.cancelReload();
+  }
+);
+
+action(
+  reload,
+  "SetReloadTime",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set reload time",
+    displayText: "{my}: Set reload time to {0} seconds",
+    description: "Set the reload duration in seconds",
+    params: [
+      {
+        id: "time",
+        name: "Reload Time",
+        desc: "Reload time in seconds",
+        type: "number",
+        initialValue: "2",
+      },
+    ],
+  },
+  function (time) {
+    const newReloadTime = Math.max(0, time);
+    
+    // If currently reloading, adjust the timer proportionally
+    if (this._isReloading && this._reloadTime > 0) {
+      const progress = 1 - (this._reloadTimer / this._reloadTime);
+      this._reloadTime = newReloadTime;
+      this._reloadTimer = this._reloadTime * (1 - progress);
+    } else {
+      this._reloadTime = newReloadTime;
+    }
+  }
+);
+
+action(
+  reload,
+  "InstantReload",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Instant reload",
+    displayText: "{my}: Instant reload",
+    description: "Instantly reload the weapon to max ammo",
+    params: [],
+  },
+  function () {
+    this._currentAmmo = this._maxAmmo;
+    this._isReloading = false;
+  }
+);
+
+action(
+  reload,
+  "SetAutoReload",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set auto reload",
+    displayText: "{my}: Set auto reload to {0}",
+    description: "Enable or disable auto reload when empty",
+    params: [
+      {
+        id: "enabled",
+        name: "Enabled",
+        desc: "Whether auto reload is enabled",
+        type: "combo",
+        initialValue: "enabled",
+        items: [
+          { enabled: "Enabled" },
+          { disabled: "Disabled" },
+        ],
+      },
+    ],
+  },
+  function (enabled) {
+    this._autoReload = enabled === "enabled";
+  }
+);
+
+condition(
+  reload,
+  "IsReloading",
+  {
+    highlight: true,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: true,
+    listName: "Is reloading",
+    displayText: "{my}: Is reloading",
+    description: "True if the weapon is currently reloading",
+    params: [],
+  },
+  function () {
+    return this._isReloading;
+  }
+);
+
+condition(
+  reload,
+  "OnReloadStart",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On reload start",
+    displayText: "{my}: On reload start",
+    description: "Triggered when reload begins",
+    params: [],
+  },
+  function () {
+    return true;
+  }
+);
+
+condition(
+  reload,
+  "OnReloadComplete",
+  {
+    highlight: true,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On reload complete",
+    displayText: "{my}: On reload complete",
+    description: "Triggered when reload finishes",
+    params: [],
+  },
+  function () {
     return true;
   }
 );
 
 expression(
-  category,
-  "SampleExpression",
+  reload,
+  "Reloading",
   {
-    highlight: false,
+    highlight: true,
     deprecated: false,
-    returnType: "string",
-    description: "This is a sample expression",
+    returnType: "number",
+    description: "Returns 1 if reloading, 0 if not",
     params: [],
   },
   function () {
-    console.log("Sample Expression");
-    return "Sample Expression";
-  },
-  false
+    return this._isReloading ? 1 : 0;
+  }
 );
+
+expression(
+  reload,
+  "ReloadTime",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the reload duration in seconds",
+    params: [],
+  },
+  function () {
+    return this._reloadTime;
+  }
+);
+
+expression(
+  reload,
+  "ReloadProgress",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get reload progress as percentage (0-100)",
+    params: [],
+  },
+  function () {
+    return this.getReloadProgress() * 100;
+  }
+);
+
+

@@ -65,7 +65,7 @@ export const info = {
     MustPreDraw: false,
 
     // PLUGIN object only
-    IsSingleGlobal: true,
+    IsSingleGlobal: false,
   },
   // PLUGIN only
   AddCommonACEs: {
@@ -79,45 +79,111 @@ export const info = {
 };
 
 export const properties = [
-  /*
+  // Ammo Settings
   {
     type: PROPERTY_TYPE.INTEGER,
-    id: "property_id",
+    id: "max_ammo",
+    options: {
+      initialValue: 30,
+      minValue: 1,
+    },
+    name: "Max Ammo",
+    desc: "Maximum ammunition capacity",
+  },
+  {
+    type: PROPERTY_TYPE.INTEGER,
+    id: "starting_ammo",
+    options: {
+      initialValue: 30,
+      minValue: 0,
+    },
+    name: "Starting Ammo",
+    desc: "Ammunition when the weapon is created",
+  },
+  // Fire Settings
+  {
+    type: PROPERTY_TYPE.FLOAT,
+    id: "fire_rate",
+    options: {
+      initialValue: 0.1,
+      minValue: 0.01,
+    },
+    name: "Fire Rate",
+    desc: "Time between shots in seconds",
+  },
+  {
+    type: PROPERTY_TYPE.COMBO,
+    id: "fire_mode",
+    options: {
+      initialValue: "single",
+      items: [
+        { single: "Single Shot" },
+        { automatic: "Automatic" },
+        { burst: "Burst Fire" },
+      ],
+    },
+    name: "Fire Mode",
+    desc: "The firing mode of the weapon",
+  },
+  {
+    type: PROPERTY_TYPE.INTEGER,
+    id: "burst_count",
+    options: {
+      initialValue: 3,
+      minValue: 2,
+    },
+    name: "Burst Count",
+    desc: "Number of shots in burst fire mode",
+  },
+  {
+    type: PROPERTY_TYPE.FLOAT,
+    id: "burst_delay",
+    options: {
+      initialValue: 0.05,
+      minValue: 0.01,
+    },
+    name: "Burst Delay",
+    desc: "Time between shots in a burst (seconds)",
+  },
+  // Projectile Settings
+  {
+    type: PROPERTY_TYPE.INTEGER,
+    id: "image_point",
     options: {
       initialValue: 0,
-      interpolatable: false,
-
-      // minValue: 0, // omit to disable
-      // maxValue: 100, // omit to disable
-
-      // for type combo only
-      // items: [
-      //   {itemId1: "item name1" },
-      //   {itemId2: "item name2" },
-      // ],
-
-      // dragSpeedMultiplier: 1, // omit to disable
-
-      // for type object only
-      // allowedPluginIds: ["Sprite", "<world>"],
-
-      // for type link only
-      // linkCallback: function(instOrObj) {},
-      // linkText: "Link Text",
-      // callbackType:
-      //   "for-each-instance"
-      //   "once-for-type"
-
-      // for type info only
-      // infoCallback: function(inst) {},
-
-      // for type projectfile only (plugins only, Addon SDK v2, r426+)
-      // A dropdown list from which any project file in the project can be chosen.
-      // The property value at runtime is a relative path to fetch the project file from.
-      // filter: ".txt", // optional: filter list by file extension (e.g., ".txt" to only list .txt files)
+      minValue: 0,
     },
-    name: "Property Name",
-    desc: "Property Description",
-  }
-  */
+    name: "Image Point",
+    desc: "Image point index to spawn projectiles from",
+  },
+  {
+    type: PROPERTY_TYPE.FLOAT,
+    id: "spread_angle",
+    options: {
+      initialValue: 0,
+      minValue: 0,
+    },
+    name: "Spread Angle",
+    desc: "Random spread angle in degrees (0 for no spread)",
+  },
+  // Reload Settings
+  {
+    type: PROPERTY_TYPE.FLOAT,
+    id: "reload_time",
+    options: {
+      initialValue: 2.0,
+      minValue: 0,
+    },
+    name: "Reload Time",
+    desc: "Time to reload in seconds",
+  },
+  {
+    type: PROPERTY_TYPE.CHECK,
+    id: "auto_reload",
+    options: {
+      initialValue: true,
+    },
+    name: "Auto Reload",
+    desc: "Automatically reload when empty and firing",
+  },
 ];

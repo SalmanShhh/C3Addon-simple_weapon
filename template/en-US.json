@@ -1,117 +1,370 @@
 {
   "languageTag": "en-US",
-  "fileDescription": "Strings for sample_addon.",
+  "fileDescription": "Strings for salmanshh_simple_weapon.",
   "text": {
-    "plugins": {
-      "sample_addon": {
-        "name": "Sample Addon",
-        "description": "Description",
+    "behaviors": {
+      "salmanshh_simple_weapon": {
+        "name": "Simple Weapon",
+        "description": "Handle firing, reloading, ammo management, and multiple fire modes without complex events. Perfect for shooters, action games, and any project needing weapon systems.",
         "help-url": "https://www.construct.net",
         "aceCategories": {
-          "Ace_Folders_In_Category_Folder": "Ace_Folders_In_Category_Folder",
-          "Aces_Files_In_Category_Folder": "Aces_Files_In_Category_Folder",
-          "Aces_In_Single_File": "Aces_In_Single_File"
+          "Ammo": "Ammo",
+          "Firing": "Firing",
+          "Reload": "Reload"
         },
-        "properties": {},
+        "properties": {
+          "max_ammo": {
+            "name": "Max Ammo",
+            "desc": "Maximum ammunition capacity"
+          },
+          "starting_ammo": {
+            "name": "Starting Ammo",
+            "desc": "Ammunition when the weapon is created"
+          },
+          "fire_rate": {
+            "name": "Fire Rate",
+            "desc": "Time between shots in seconds"
+          },
+          "fire_mode": {
+            "name": "Fire Mode",
+            "desc": "The firing mode of the weapon",
+            "items": {
+              "single": "Single Shot",
+              "automatic": "Automatic",
+              "burst": "Burst Fire"
+            }
+          },
+          "burst_count": {
+            "name": "Burst Count",
+            "desc": "Number of shots in burst fire mode"
+          },
+          "burst_delay": {
+            "name": "Burst Delay",
+            "desc": "Time between shots in a burst (seconds)"
+          },
+          "image_point": {
+            "name": "Image Point",
+            "desc": "Image point index to spawn projectiles from"
+          },
+          "spread_angle": {
+            "name": "Spread Angle",
+            "desc": "Random spread angle in degrees (0 for no spread)"
+          },
+          "reload_time": {
+            "name": "Reload Time",
+            "desc": "Time to reload in seconds"
+          },
+          "auto_reload": {
+            "name": "Auto Reload",
+            "desc": "Automatically reload when empty and firing"
+          }
+        },
         "actions": {
-          "ActionCombo": {
-            "list-name": "Sample Action Combo",
-            "display-text": "Sample Action Combo {0}",
-            "description": "This is a sample action",
+          "AddAmmo": {
+            "list-name": "Add ammo",
+            "display-text": "{my}: Add {0} ammo",
+            "description": "Add ammunition to current count (capped at max)",
             "params": {
-              "param1": {
-                "name": "Param1",
-                "desc": "This is a sample param",
+              "amount": {
+                "name": "Amount",
+                "desc": "Amount of ammo to add"
+              }
+            }
+          },
+          "SetCurrentAmmo": {
+            "list-name": "Set current ammo",
+            "display-text": "{my}: Set current ammo to {0}",
+            "description": "Set the current ammunition count",
+            "params": {
+              "ammo": {
+                "name": "Ammo",
+                "desc": "The ammo count to set"
+              }
+            }
+          },
+          "SetMaxAmmo": {
+            "list-name": "Set max ammo",
+            "display-text": "{my}: Set max ammo to {0}",
+            "description": "Set the maximum ammunition capacity",
+            "params": {
+              "maxAmmo": {
+                "name": "Max Ammo",
+                "desc": "The maximum ammo capacity"
+              }
+            }
+          },
+          "SubtractAmmo": {
+            "list-name": "Subtract ammo",
+            "display-text": "{my}: Subtract {0} ammo",
+            "description": "Subtract ammunition from current count",
+            "params": {
+              "amount": {
+                "name": "Amount",
+                "desc": "Amount of ammo to subtract"
+              }
+            }
+          },
+          "Fire": {
+            "list-name": "Fire",
+            "display-text": "{my}: Fire weapon",
+            "description": "Fire the weapon (respects fire mode, ammo, and cooldown)",
+            "params": {}
+          },
+          "SetBurstCount": {
+            "list-name": "Set burst count",
+            "display-text": "{my}: Set burst count to {0}",
+            "description": "Set the number of shots in burst fire mode",
+            "params": {
+              "count": {
+                "name": "Burst Count",
+                "desc": "Number of shots per burst"
+              }
+            }
+          },
+          "SetFireMode": {
+            "list-name": "Set fire mode",
+            "display-text": "{my}: Set fire mode to {0}",
+            "description": "Set the weapon's fire mode",
+            "params": {
+              "mode": {
+                "name": "Fire Mode",
+                "desc": "The fire mode to set",
                 "items": {
-                  "test": "test",
-                  "test2": "test2"
+                  "single": "Single Shot",
+                  "automatic": "Automatic",
+                  "burst": "Burst Fire"
                 }
               }
             }
           },
-          "Action": {
-            "list-name": "Sample Action",
-            "display-text": "Sample Action {0}",
-            "description": "This is a sample action",
+          "SetFireRate": {
+            "list-name": "Set fire rate",
+            "display-text": "{my}: Set fire rate to {0} seconds",
+            "description": "Set the time between shots in seconds",
             "params": {
-              "param1": {
-                "name": "Param1",
-                "desc": "This is a sample param"
+              "rate": {
+                "name": "Fire Rate",
+                "desc": "Time between shots in seconds"
               }
             }
           },
-          "AsyncAction": {
-            "list-name": "Sample Action Async",
-            "display-text": "Sample Action Async",
-            "description": "This is a sample action",
+          "SetImagePoint": {
+            "list-name": "Set image point",
+            "display-text": "{my}: Set spawn image point to {0}",
+            "description": "Set the image point index for projectile spawning",
+            "params": {
+              "imagePoint": {
+                "name": "Image Point",
+                "desc": "Image point index (0 = origin)"
+              }
+            }
+          },
+          "SetSpreadAngle": {
+            "list-name": "Set spread angle",
+            "display-text": "{my}: Set spread angle to {0} degrees",
+            "description": "Set the random spread angle in degrees",
+            "params": {
+              "angle": {
+                "name": "Spread Angle",
+                "desc": "Spread angle in degrees"
+              }
+            }
+          },
+          "CancelReload": {
+            "list-name": "Cancel reload",
+            "display-text": "{my}: Cancel reload",
+            "description": "Cancel the current reload",
             "params": {}
           },
-          "SampleAction": {
-            "list-name": "Sample Action",
-            "display-text": "Sample Action {0}",
-            "description": "This is a sample action",
+          "InstantReload": {
+            "list-name": "Instant reload",
+            "display-text": "{my}: Instant reload",
+            "description": "Instantly reload the weapon to max ammo",
+            "params": {}
+          },
+          "Reload": {
+            "list-name": "Start reload",
+            "display-text": "{my}: Start reload",
+            "description": "Start reloading the weapon",
+            "params": {}
+          },
+          "SetAutoReload": {
+            "list-name": "Set auto reload",
+            "display-text": "{my}: Set auto reload to {0}",
+            "description": "Enable or disable auto reload when empty",
             "params": {
-              "param1": {
-                "name": "Param1",
-                "desc": "This is a sample param"
+              "enabled": {
+                "name": "Enabled",
+                "desc": "Whether auto reload is enabled",
+                "items": {
+                  "enabled": "Enabled",
+                  "disabled": "Disabled"
+                }
+              }
+            }
+          },
+          "SetReloadTime": {
+            "list-name": "Set reload time",
+            "display-text": "{my}: Set reload time to {0} seconds",
+            "description": "Set the reload duration in seconds",
+            "params": {
+              "time": {
+                "name": "Reload Time",
+                "desc": "Reload time in seconds"
               }
             }
           }
         },
         "conditions": {
-          "ConditionCombo": {
-            "list-name": "Sample Condition",
-            "display-text": "Sample Condition {0}",
-            "description": "This is a sample condition",
+          "CompareCurrentAmmo": {
+            "list-name": "Compare current ammo",
+            "display-text": "{my}: Current ammo {0} {1}",
+            "description": "Compare the current ammo count",
             "params": {
-              "param1": {
-                "name": "Param1",
-                "desc": "This is a sample param",
+              "comparison": {
+                "name": "Comparison",
+                "desc": "How to compare"
+              },
+              "value": {
+                "name": "Value",
+                "desc": "Value to compare to"
+              }
+            }
+          },
+          "HasAmmo": {
+            "list-name": "Has ammo",
+            "display-text": "{my}: Has ammo",
+            "description": "True if the weapon has at least 1 ammo",
+            "params": {}
+          },
+          "IsFull": {
+            "list-name": "Is ammo full",
+            "display-text": "{my}: Ammo is full",
+            "description": "True if current ammo equals max ammo",
+            "params": {}
+          },
+          "OnEmpty": {
+            "list-name": "On empty",
+            "display-text": "{my}: On empty",
+            "description": "Triggered when trying to fire with no ammo",
+            "params": {}
+          },
+          "CanFire": {
+            "list-name": "Can fire",
+            "display-text": "{my}: Can fire",
+            "description": "True if the weapon can fire (has ammo, not reloading, cooldown elapsed)",
+            "params": {}
+          },
+          "CompareFireMode": {
+            "list-name": "Compare fire mode",
+            "display-text": "{my}: Fire mode is {0}",
+            "description": "Check if the weapon is in a specific fire mode",
+            "params": {
+              "mode": {
+                "name": "Fire Mode",
+                "desc": "The fire mode to compare",
                 "items": {
-                  "TRUE": "True",
-                  "FALSE": "False"
+                  "single": "Single Shot",
+                  "automatic": "Automatic",
+                  "burst": "Burst Fire"
                 }
               }
             }
           },
-          "Condition": {
-            "list-name": "Sample Condition",
-            "display-text": "Sample Condition {0}",
-            "description": "This is a sample condition",
-            "params": {
-              "param1": {
-                "name": "Param1",
-                "desc": "This is a sample param"
-              }
-            }
-          },
-          "Trigger": {
-            "list-name": "Sample Trigger",
-            "display-text": "Sample Trigger",
-            "description": "This is a sample trigger",
+          "OnFire": {
+            "list-name": "On fire",
+            "display-text": "{my}: On fire",
+            "description": "Triggered when the weapon fires a shot",
             "params": {}
           },
-          "SampleCondition": {
-            "list-name": "Sample Condition",
-            "display-text": "Sample Condition",
-            "description": "This is a sample condition",
+          "IsReloading": {
+            "list-name": "Is reloading",
+            "display-text": "{my}: Is reloading",
+            "description": "True if the weapon is currently reloading",
+            "params": {}
+          },
+          "OnReloadComplete": {
+            "list-name": "On reload complete",
+            "display-text": "{my}: On reload complete",
+            "description": "Triggered when reload finishes",
+            "params": {}
+          },
+          "OnReloadStart": {
+            "list-name": "On reload start",
+            "display-text": "{my}: On reload start",
+            "description": "Triggered when reload begins",
             "params": {}
           }
         },
         "expressions": {
-          "Expression2": {
-            "translated-name": "Expression2",
-            "description": "Sample Expression",
+          "AmmoPercent": {
+            "translated-name": "AmmoPercent",
+            "description": "Get ammo as a percentage (0-100)",
             "params": {}
           },
-          "Expression": {
-            "translated-name": "Expression",
-            "description": "Sample Expression",
+          "CurrentAmmo": {
+            "translated-name": "CurrentAmmo",
+            "description": "Get the current ammunition count",
             "params": {}
           },
-          "SampleExpression": {
-            "translated-name": "SampleExpression",
-            "description": "This is a sample expression",
+          "MaxAmmo": {
+            "translated-name": "MaxAmmo",
+            "description": "Get the maximum ammunition capacity",
+            "params": {}
+          },
+          "BurstCount": {
+            "translated-name": "BurstCount",
+            "description": "Get the number of shots in burst fire mode",
+            "params": {}
+          },
+          "FireMode": {
+            "translated-name": "FireMode",
+            "description": "Get the current fire mode (\"single\", \"automatic\", or \"burst\")",
+            "params": {}
+          },
+          "FireRate": {
+            "translated-name": "FireRate",
+            "description": "Get the fire rate (time between shots in seconds)",
+            "params": {}
+          },
+          "ImagePoint": {
+            "translated-name": "ImagePoint",
+            "description": "Get the image point index for projectile spawning",
+            "params": {}
+          },
+          "SpawnAngle": {
+            "translated-name": "SpawnAngle",
+            "description": "Get the angle for spawning projectiles (with spread applied, in degrees)",
+            "params": {}
+          },
+          "SpawnX": {
+            "translated-name": "SpawnX",
+            "description": "Get the X position for spawning projectiles (at image point)",
+            "params": {}
+          },
+          "SpawnY": {
+            "translated-name": "SpawnY",
+            "description": "Get the Y position for spawning projectiles (at image point)",
+            "params": {}
+          },
+          "SpreadAngle": {
+            "translated-name": "SpreadAngle",
+            "description": "Get the spread angle in degrees",
+            "params": {}
+          },
+          "Reloading": {
+            "translated-name": "Reloading",
+            "description": "Returns 1 if reloading, 0 if not",
+            "params": {}
+          },
+          "ReloadProgress": {
+            "translated-name": "ReloadProgress",
+            "description": "Get reload progress as percentage (0-100)",
+            "params": {}
+          },
+          "ReloadTime": {
+            "translated-name": "ReloadTime",
+            "description": "Get the reload duration in seconds",
             "params": {}
           }
         }
