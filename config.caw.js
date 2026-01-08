@@ -79,7 +79,8 @@ export const info = {
 };
 
 export const properties = [
-  // Ammo Settings
+  // Ammo Settings 
+  // property [0]: max ammo, [1]: starting ammo, [2]: fire rate, [3]: fire mode
   {
     type: PROPERTY_TYPE.INTEGER,
     id: "max_ammo",
@@ -101,6 +102,7 @@ export const properties = [
     desc: "Ammunition when the weapon is created",
   },
   // Fire Settings
+  // property [2]: fire rate, [3]: fire mode, [4]: burst count, [5]: burst delay
   {
     type: PROPERTY_TYPE.FLOAT,
     id: "fire_rate",
@@ -145,28 +147,8 @@ export const properties = [
     name: "Burst Delay",
     desc: "Time between shots in a burst (seconds)",
   },
-  // Projectile Settings
-  {
-    type: PROPERTY_TYPE.INTEGER,
-    id: "image_point",
-    options: {
-      initialValue: 0,
-      minValue: 0,
-    },
-    name: "Image Point",
-    desc: "Image point index to spawn projectiles from",
-  },
-  {
-    type: PROPERTY_TYPE.FLOAT,
-    id: "spread_angle",
-    options: {
-      initialValue: 0,
-      minValue: 0,
-    },
-    name: "Spread Angle",
-    desc: "Random spread angle in degrees (0 for no spread)",
-  },
   // Reload Settings
+  // property [6]: reload time, [7]: auto reload, [8]: reload type
   {
     type: PROPERTY_TYPE.FLOAT,
     id: "reload_time",
@@ -175,7 +157,7 @@ export const properties = [
       minValue: 0,
     },
     name: "Reload Time",
-    desc: "Time to reload in seconds",
+    desc: "Time to reload in seconds (or per bullet for Per-Bullet type)",
   },
   {
     type: PROPERTY_TYPE.CHECK,
@@ -185,5 +167,19 @@ export const properties = [
     },
     name: "Auto Reload",
     desc: "Automatically reload when empty and firing",
+  },
+  {
+    type: PROPERTY_TYPE.COMBO,
+    id: "reload_type",
+    options: {
+      initialValue: "magazine",
+      items: [
+        { magazine: "Magazine Reload" },
+        { per_bullet: "Per-Bullet Reload" },
+        { charge_based: "Charge-Based Reload" },
+      ],
+    },
+    name: "Reload Type",
+    desc: "How the weapon reloads ammunitio, Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Charge-Based: Gradually reloads ammo over time",
   },
 ];

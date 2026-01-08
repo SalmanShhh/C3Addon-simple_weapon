@@ -79,26 +79,18 @@ action(
 
 action(
   firing,
-  "SetSpreadAngle",
+  "ResetFireCooldown",
   {
     highlight: false,
     deprecated: false,
     isAsync: false,
-    listName: "Set spread angle",
-    displayText: "{my}: Set spread angle to {0} degrees",
-    description: "Set the random spread angle in degrees",
-    params: [
-      {
-        id: "angle",
-        name: "Spread Angle",
-        desc: "Spread angle in degrees",
-        type: "number",
-        initialValue: "0",
-      },
-    ],
+    listName: "Reset fire cooldown",
+    displayText: "{my}: Reset fire cooldown",
+    description: "Instantly reset the fire cooldown, allowing immediate firing",
+    params: [],
   },
-  function (angle) {
-    this._spreadAngle = angle;
+  function () {
+    this._fireCooldown = 0;
   }
 );
 
@@ -124,31 +116,6 @@ action(
   },
   function (count) {
     this._burstCount = Math.max(1, Math.floor(count));
-  }
-);
-
-action(
-  firing,
-  "SetImagePoint",
-  {
-    highlight: false,
-    deprecated: false,
-    isAsync: false,
-    listName: "Set image point",
-    displayText: "{my}: Set spawn image point to {0}",
-    description: "Set the image point index for projectile spawning",
-    params: [
-      {
-        id: "imagePoint",
-        name: "Image Point",
-        desc: "Image point index (0 = origin)",
-        type: "number",
-        initialValue: "0",
-      },
-    ],
-  },
-  function (imagePoint) {
-    this._imagePoint = Math.max(0, Math.floor(imagePoint));
   }
 );
 
@@ -236,16 +203,31 @@ expression(
 
 expression(
   firing,
-  "SpreadAngle",
+  "FireCooldown",
   {
     highlight: false,
     deprecated: false,
     returnType: "number",
-    description: "Get the spread angle in degrees",
+    description: "Get the current fire cooldown remaining (in seconds)",
     params: [],
   },
   function () {
-    return this._spreadAngle;
+    return this._fireCooldown;
+  }
+);
+
+expression(
+  firing,
+  "FireCooldownProgress",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get fire cooldown progress as a percentage (0-1, where 100 means ready to fire)",
+    params: [],
+  },
+  function () {
+    return this.getFireCooldownProgress();
   }
 );
 
@@ -289,51 +271,6 @@ expression(
   },
   function () {
     return this._imagePoint;
-  }
-);
-
-expression(
-  firing,
-  "SpawnX",
-  {
-    highlight: true,
-    deprecated: false,
-    returnType: "number",
-    description: "Get the X position for spawning projectiles (at image point)",
-    params: [],
-  },
-  function () {
-    return this.getSpawnPosition().x;
-  }
-);
-
-expression(
-  firing,
-  "SpawnY",
-  {
-    highlight: true,
-    deprecated: false,
-    returnType: "number",
-    description: "Get the Y position for spawning projectiles (at image point)",
-    params: [],
-  },
-  function () {
-    return this.getSpawnPosition().y;
-  }
-);
-
-expression(
-  firing,
-  "SpawnAngle",
-  {
-    highlight: true,
-    deprecated: false,
-    returnType: "number",
-    description: "Get the angle for spawning projectiles (with spread applied, in degrees)",
-    params: [],
-  },
-  function () {
-    return this.getSpawnPosition().angle * (180 / Math.PI);
   }
 );
 
@@ -414,7 +351,11 @@ action(
     ],
   },
   function (amount) {
+    const oldAmmo = this._currentAmmo;
     this._currentAmmo = Math.min(this._currentAmmo + amount, this._maxAmmo);
+    if (this._currentAmmo > oldAmmo) {
+      this._trigger("OnAddAmmo");
+    }
   }
 );
 
@@ -440,6 +381,24 @@ action(
   },
   function (amount) {
     this._currentAmmo = Math.max(0, this._currentAmmo - amount);
+  }
+);
+
+condition(
+  ammo,
+  "OnAddAmmo",
+  {
+    highlight: true,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On add ammo",
+    displayText: "{my}: On add ammo",
+    description: "Triggered when ammo is added to the weapon",
+    params: [],
+  },
+  function () {
+    return true;
   }
 );
 
@@ -699,6 +658,44 @@ action(
   }
 );
 
+action(
+  reload,
+  "SetReloadType",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set reload type",
+    displayText: "{my}: Set reload type to {0}",
+    description: "Set how the weapon reloads ammunition, Magazine: Traditional - press reload, wait full time, get full ammo, Per-Bullet: Reloads one bullet at a time over reload time, Charge-Based: Gradually reloads ammo over time",
+    params: [
+      {
+        id: "reloadType",
+        name: "Reload Type",
+        desc: "The reload type",
+        type: "combo",
+        initialValue: "magazine",
+        items: [
+          { magazine: "Magazine Reload" },
+          { per_bullet: "Per-Bullet Reload" },
+          { charge_based: "Charge-Based Reload" },
+        ],
+      },
+    ],
+  },
+  function (reloadType) {
+    this._reloadType = reloadType;
+    
+    // Initialize charge cooldowns if switching to charge-based
+    if (reloadType === "charge_based") {
+      this._chargeCooldowns = [];
+      for (let i = 0; i < this._maxAmmo; i++) {
+        this._chargeCooldowns.push(0);
+      }
+    }
+  }
+);
+
 condition(
   reload,
   "IsReloading",
@@ -798,4 +795,17 @@ expression(
   }
 );
 
-
+expression(
+  reload,
+  "ReloadType",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "string",
+    description: "Get the current reload type (magazine, per_bullet, or charge_based)",
+    params: [],
+  },
+  function () {
+    return this._reloadType || "magazine";
+  }
+);

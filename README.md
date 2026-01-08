@@ -54,7 +54,6 @@ npm run dev
 | Burst Count | Number of shots in burst fire mode | integer |
 | Burst Delay | Time between shots in a burst (seconds) | float |
 | Image Point | Image point index to spawn projectiles from | integer |
-| Spread Angle | Random spread angle in degrees (0 for no spread) | float |
 | Reload Time | Time to reload in seconds | float |
 | Auto Reload | Automatically reload when empty and firing | check |
 
@@ -72,7 +71,6 @@ npm run dev
 | Set fire mode | Set the weapon's fire mode | Fire Mode             *(combo)* <br> |
 | Set fire rate | Set the time between shots in seconds | Fire Rate             *(number)* <br> |
 | Set image point | Set the image point index for projectile spawning | Image Point             *(number)* <br> |
-| Set spread angle | Set the random spread angle in degrees | Spread Angle             *(number)* <br> |
 | Cancel reload | Cancel the current reload |  |
 | Instant reload | Instantly reload the weapon to max ammo |  |
 | Start reload | Start reloading the weapon |  |
@@ -110,7 +108,6 @@ npm run dev
 | SpawnAngle | Get the angle for spawning projectiles (with spread applied, in degrees) | number |  | 
 | SpawnX | Get the X position for spawning projectiles (at image point) | number |  | 
 | SpawnY | Get the Y position for spawning projectiles (at image point) | number |  | 
-| SpreadAngle | Get the spread angle in degrees | number |  | 
 | Reloading | Returns 1 if reloading, 0 if not | number |  | 
 | ReloadProgress | Get reload progress as percentage (0-100) | number |  | 
 | ReloadTime | Get the reload duration in seconds | number |  | 

@@ -42,21 +42,22 @@
             "name": "Burst Delay",
             "desc": "Time between shots in a burst (seconds)"
           },
-          "image_point": {
-            "name": "Image Point",
-            "desc": "Image point index to spawn projectiles from"
-          },
-          "spread_angle": {
-            "name": "Spread Angle",
-            "desc": "Random spread angle in degrees (0 for no spread)"
-          },
           "reload_time": {
             "name": "Reload Time",
-            "desc": "Time to reload in seconds"
+            "desc": "Time to reload in seconds (or per bullet for Per-Bullet type)"
           },
           "auto_reload": {
             "name": "Auto Reload",
             "desc": "Automatically reload when empty and firing"
+          },
+          "reload_type": {
+            "name": "Reload Type",
+            "desc": "How the weapon reloads ammunitio, Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Charge-Based: Gradually reloads ammo over time",
+            "items": {
+              "magazine": "Magazine Reload",
+              "per_bullet": "Per-Bullet Reload",
+              "charge_based": "Charge-Based Reload"
+            }
           }
         },
         "actions": {
@@ -110,6 +111,12 @@
             "description": "Fire the weapon (respects fire mode, ammo, and cooldown)",
             "params": {}
           },
+          "ResetFireCooldown": {
+            "list-name": "Reset fire cooldown",
+            "display-text": "{my}: Reset fire cooldown",
+            "description": "Instantly reset the fire cooldown, allowing immediate firing",
+            "params": {}
+          },
           "SetBurstCount": {
             "list-name": "Set burst count",
             "display-text": "{my}: Set burst count to {0}",
@@ -145,28 +152,6 @@
               "rate": {
                 "name": "Fire Rate",
                 "desc": "Time between shots in seconds"
-              }
-            }
-          },
-          "SetImagePoint": {
-            "list-name": "Set image point",
-            "display-text": "{my}: Set spawn image point to {0}",
-            "description": "Set the image point index for projectile spawning",
-            "params": {
-              "imagePoint": {
-                "name": "Image Point",
-                "desc": "Image point index (0 = origin)"
-              }
-            }
-          },
-          "SetSpreadAngle": {
-            "list-name": "Set spread angle",
-            "display-text": "{my}: Set spread angle to {0} degrees",
-            "description": "Set the random spread angle in degrees",
-            "params": {
-              "angle": {
-                "name": "Spread Angle",
-                "desc": "Spread angle in degrees"
               }
             }
           },
@@ -213,6 +198,22 @@
                 "desc": "Reload time in seconds"
               }
             }
+          },
+          "SetReloadType": {
+            "list-name": "Set reload type",
+            "display-text": "{my}: Set reload type to {0}",
+            "description": "Set how the weapon reloads ammunition, Magazine: Traditional - press reload, wait full time, get full ammo, Per-Bullet: Reloads one bullet at a time over reload time, Charge-Based: Gradually reloads ammo over time",
+            "params": {
+              "reloadType": {
+                "name": "Reload Type",
+                "desc": "The reload type",
+                "items": {
+                  "magazine": "Magazine Reload",
+                  "per_bullet": "Per-Bullet Reload",
+                  "charge_based": "Charge-Based Reload"
+                }
+              }
+            }
           }
         },
         "conditions": {
@@ -241,6 +242,12 @@
             "list-name": "Is ammo full",
             "display-text": "{my}: Ammo is full",
             "description": "True if current ammo equals max ammo",
+            "params": {}
+          },
+          "OnAddAmmo": {
+            "list-name": "On add ammo",
+            "display-text": "{my}: On add ammo",
+            "description": "Triggered when ammo is added to the weapon",
             "params": {}
           },
           "OnEmpty": {
@@ -317,6 +324,16 @@
             "description": "Get the number of shots in burst fire mode",
             "params": {}
           },
+          "FireCooldown": {
+            "translated-name": "FireCooldown",
+            "description": "Get the current fire cooldown remaining (in seconds)",
+            "params": {}
+          },
+          "FireCooldownProgress": {
+            "translated-name": "FireCooldownProgress",
+            "description": "Get fire cooldown progress as a percentage (0-1, where 100 means ready to fire)",
+            "params": {}
+          },
           "FireMode": {
             "translated-name": "FireMode",
             "description": "Get the current fire mode (\"single\", \"automatic\", or \"burst\")",
@@ -332,26 +349,6 @@
             "description": "Get the image point index for projectile spawning",
             "params": {}
           },
-          "SpawnAngle": {
-            "translated-name": "SpawnAngle",
-            "description": "Get the angle for spawning projectiles (with spread applied, in degrees)",
-            "params": {}
-          },
-          "SpawnX": {
-            "translated-name": "SpawnX",
-            "description": "Get the X position for spawning projectiles (at image point)",
-            "params": {}
-          },
-          "SpawnY": {
-            "translated-name": "SpawnY",
-            "description": "Get the Y position for spawning projectiles (at image point)",
-            "params": {}
-          },
-          "SpreadAngle": {
-            "translated-name": "SpreadAngle",
-            "description": "Get the spread angle in degrees",
-            "params": {}
-          },
           "Reloading": {
             "translated-name": "Reloading",
             "description": "Returns 1 if reloading, 0 if not",
@@ -365,6 +362,11 @@
           "ReloadTime": {
             "translated-name": "ReloadTime",
             "description": "Get the reload duration in seconds",
+            "params": {}
+          },
+          "ReloadType": {
+            "translated-name": "ReloadType",
+            "description": "Get the current reload type (magazine, per_bullet, or charge_based)",
             "params": {}
           }
         }
