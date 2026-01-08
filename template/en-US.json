@@ -27,7 +27,7 @@
           },
           "fire_mode": {
             "name": "Fire Mode",
-            "desc": "The firing mode of the weapon",
+            "desc": "The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull",
             "items": {
               "single": "Single Shot",
               "automatic": "Automatic",
@@ -44,7 +44,7 @@
           },
           "reload_time": {
             "name": "Reload Time",
-            "desc": "Time to reload in seconds (or per bullet for Per-Bullet type)"
+            "desc": "Time to reload in seconds (or per bullet for Per-Bullet type, or ammo regen rate for Ammo Regeneration)"
           },
           "auto_reload": {
             "name": "Auto Reload",
@@ -52,12 +52,16 @@
           },
           "reload_type": {
             "name": "Reload Type",
-            "desc": "How the weapon reloads ammunitio, Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Charge-Based: Gradually reloads ammo over time",
+            "desc": "How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Ammo Regeneration: Ammo regenerates automatically over time after firing",
             "items": {
               "magazine": "Magazine Reload",
               "per_bullet": "Per-Bullet Reload",
-              "charge_based": "Charge-Based Reload"
+              "ammo_regen": "Ammo Regeneration"
             }
+          },
+          "regen_delay": {
+            "name": "Regeneration Delay",
+            "desc": "Delay in seconds before ammo regeneration starts after firing (for Ammo Regeneration type only)"
           }
         },
         "actions": {
@@ -167,6 +171,17 @@
             "description": "Instantly reload the weapon to max ammo",
             "params": {}
           },
+          "PartialReload": {
+            "list-name": "Reload bullets",
+            "display-text": "{my}: Reload {0} bullet(s)",
+            "description": "Instantly reload a number of bullets (for Per-Bullet reload type)",
+            "params": {
+              "count": {
+                "name": "Count",
+                "desc": "Number of bullets to reload"
+              }
+            }
+          },
           "Reload": {
             "list-name": "Start reload",
             "display-text": "{my}: Start reload",
@@ -210,7 +225,7 @@
                 "items": {
                   "magazine": "Magazine Reload",
                   "per_bullet": "Per-Bullet Reload",
-                  "charge_based": "Charge-Based Reload"
+                  "ammo_regen": "Ammo Regeneration"
                 }
               }
             }
@@ -284,10 +299,38 @@
             "description": "Triggered when the weapon fires a shot",
             "params": {}
           },
+          "CompareReloadType": {
+            "list-name": "Compare reload type",
+            "display-text": "{my}: Reload type is {0}",
+            "description": "Compare the current reload type",
+            "params": {
+              "reloadType": {
+                "name": "Reload Type",
+                "desc": "The reload type to compare",
+                "items": {
+                  "magazine": "Magazine Reload",
+                  "per_bullet": "Per-Bullet Reload",
+                  "ammo_regen": "Ammo Regeneration"
+                }
+              }
+            }
+          },
           "IsReloading": {
             "list-name": "Is reloading",
             "display-text": "{my}: Is reloading",
             "description": "True if the weapon is currently reloading",
+            "params": {}
+          },
+          "OnPartialReload": {
+            "list-name": "On partial reload",
+            "display-text": "{my}: On partial reload",
+            "description": "Triggered when one bullet is loaded (Per-Bullet reload type only)",
+            "params": {}
+          },
+          "OnPartialReloadStart": {
+            "list-name": "On partial reload start",
+            "display-text": "{my}: On partial reload start",
+            "description": "Triggered when per-bullet reload begins loading a bullet",
             "params": {}
           },
           "OnReloadComplete": {
@@ -344,11 +387,6 @@
             "description": "Get the fire rate (time between shots in seconds)",
             "params": {}
           },
-          "ImagePoint": {
-            "translated-name": "ImagePoint",
-            "description": "Get the image point index for projectile spawning",
-            "params": {}
-          },
           "Reloading": {
             "translated-name": "Reloading",
             "description": "Returns 1 if reloading, 0 if not",
@@ -356,7 +394,7 @@
           },
           "ReloadProgress": {
             "translated-name": "ReloadProgress",
-            "description": "Get reload progress as percentage (0-100)",
+            "description": "Get reload progress as percentage (0-1, where 1 means reload complete)",
             "params": {}
           },
           "ReloadTime": {

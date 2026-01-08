@@ -125,7 +125,7 @@ export const properties = [
       ],
     },
     name: "Fire Mode",
-    desc: "The firing mode of the weapon",
+    desc: "The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull",
   },
   {
     type: PROPERTY_TYPE.INTEGER,
@@ -148,7 +148,7 @@ export const properties = [
     desc: "Time between shots in a burst (seconds)",
   },
   // Reload Settings
-  // property [6]: reload time, [7]: auto reload, [8]: reload type
+  // property [6]: reload time, [7]: auto reload, [8]: reload type, [9]: regen delay
   {
     type: PROPERTY_TYPE.FLOAT,
     id: "reload_time",
@@ -157,7 +157,7 @@ export const properties = [
       minValue: 0,
     },
     name: "Reload Time",
-    desc: "Time to reload in seconds (or per bullet for Per-Bullet type)",
+    desc: "Time to reload in seconds (or per bullet for Per-Bullet type, or ammo regen rate for Ammo Regeneration)",
   },
   {
     type: PROPERTY_TYPE.CHECK,
@@ -176,10 +176,20 @@ export const properties = [
       items: [
         { magazine: "Magazine Reload" },
         { per_bullet: "Per-Bullet Reload" },
-        { charge_based: "Charge-Based Reload" },
+        { ammo_regen: "Ammo Regeneration" },
       ],
     },
     name: "Reload Type",
-    desc: "How the weapon reloads ammunitio, Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Charge-Based: Gradually reloads ammo over time",
+    desc: "How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Ammo Regeneration: Ammo regenerates automatically over time after firing",
+  },
+  {
+    type: PROPERTY_TYPE.FLOAT,
+    id: "regen_delay",
+    options: {
+      initialValue: 1.0,
+      minValue: 0,
+    },
+    name: "Regeneration Delay",
+    desc: "Delay in seconds before ammo regeneration starts after firing (for Ammo Regeneration type only)",
   },
 ];

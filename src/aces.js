@@ -260,20 +260,6 @@ expression(
   }
 );
 
-expression(
-  firing,  "ImagePoint",
-  {
-    highlight: false,
-    deprecated: false,
-    returnType: "number",
-    description: "Get the image point index for projectile spawning",
-    params: [],
-  },
-  function () {
-    return this._imagePoint;
-  }
-);
-
 // ============================================
 // AMMO CATEGORY
 // ============================================
@@ -579,6 +565,42 @@ action(
 
 action(
   reload,
+  "PartialReload",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Reload bullets",
+    displayText: "{my}: Reload {0} bullet(s)",
+    description: "Instantly reload a number of bullets (for Per-Bullet reload type)",
+    params: [
+      {
+        id: "count",
+        name: "Count",
+        desc: "Number of bullets to reload",
+        type: "number",
+        initialValue: "1",
+      },
+    ],
+  },
+  function (count) {
+    const bulletsToAdd = Math.max(1, Math.floor(count));
+    const oldAmmo = this._currentAmmo;
+    
+    this._currentAmmo = Math.min(this._currentAmmo + bulletsToAdd, this._maxAmmo);
+    
+    if (this._currentAmmo > oldAmmo) {
+      this._trigger("OnPartialReload");
+      
+      if (this._currentAmmo >= this._maxAmmo) {
+        this._trigger("OnReloadComplete");
+      }
+    }
+  }
+);
+
+action(
+  reload,
   "SetReloadTime",
   {
     highlight: false,
@@ -678,7 +700,7 @@ action(
         items: [
           { magazine: "Magazine Reload" },
           { per_bullet: "Per-Bullet Reload" },
-          { charge_based: "Charge-Based Reload" },
+          { ammo_regen: "Ammo Regeneration" },
         ],
       },
     ],
@@ -686,12 +708,9 @@ action(
   function (reloadType) {
     this._reloadType = reloadType;
     
-    // Initialize charge cooldowns if switching to charge-based
-    if (reloadType === "charge_based") {
-      this._chargeCooldowns = [];
-      for (let i = 0; i < this._maxAmmo; i++) {
-        this._chargeCooldowns.push(0);
-      }
+    // Initialize regen delay if switching to ammo regeneration
+    if (reloadType === "ammo_regen") {
+      this._regenDelayTimer = 0;
     }
   }
 );
@@ -716,6 +735,37 @@ condition(
 
 condition(
   reload,
+  "CompareReloadType",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: false,
+    isInvertible: false,
+    listName: "Compare reload type",
+    displayText: "{my}: Reload type is {0}",
+    description: "Compare the current reload type",
+    params: [
+      {
+        id: "reloadType",
+        name: "Reload Type",
+        desc: "The reload type to compare",
+        type: "combo",
+        initialValue: "magazine",
+        items: [
+          { magazine: "Magazine Reload" },
+          { per_bullet: "Per-Bullet Reload" },
+          { ammo_regen: "Ammo Regeneration" },
+        ],
+      },
+    ],
+  },
+  function (reloadType) {
+    return this._reloadType === reloadType;
+  }
+);
+
+condition(
+  reload,
   "OnReloadStart",
   {
     highlight: false,
@@ -734,6 +784,24 @@ condition(
 
 condition(
   reload,
+  "OnPartialReloadStart",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On partial reload start",
+    displayText: "{my}: On partial reload start",
+    description: "Triggered when per-bullet reload begins loading a bullet",
+    params: [],
+  },
+  function () {
+    return true;
+  }
+);
+
+condition(
+  reload,
   "OnReloadComplete",
   {
     highlight: true,
@@ -743,6 +811,24 @@ condition(
     listName: "On reload complete",
     displayText: "{my}: On reload complete",
     description: "Triggered when reload finishes",
+    params: [],
+  },
+  function () {
+    return true;
+  }
+);
+
+condition(
+  reload,
+  "OnPartialReload",
+  {
+    highlight: false,
+    deprecated: false,
+    isTrigger: true,
+    isInvertible: false,
+    listName: "On partial reload",
+    displayText: "{my}: On partial reload",
+    description: "Triggered when one bullet is loaded (Per-Bullet reload type only)",
     params: [],
   },
   function () {
@@ -787,11 +873,11 @@ expression(
     highlight: false,
     deprecated: false,
     returnType: "number",
-    description: "Get reload progress as percentage (0-100)",
+    description: "Get reload progress as percentage (0-1, where 1 means reload complete)",
     params: [],
   },
   function () {
-    return this.getReloadProgress() * 100;
+    return this.getReloadProgress();
   }
 );
 

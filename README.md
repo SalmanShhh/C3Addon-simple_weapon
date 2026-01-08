@@ -50,12 +50,12 @@ npm run dev
 | Max Ammo | Maximum ammunition capacity | integer |
 | Starting Ammo | Ammunition when the weapon is created | integer |
 | Fire Rate | Time between shots in seconds | float |
-| Fire Mode | The firing mode of the weapon | combo |
+| Fire Mode | The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull | combo |
 | Burst Count | Number of shots in burst fire mode | integer |
 | Burst Delay | Time between shots in a burst (seconds) | float |
-| Image Point | Image point index to spawn projectiles from | integer |
-| Reload Time | Time to reload in seconds | float |
+| Reload Time | Time to reload in seconds (or per bullet for Per-Bullet type) | float |
 | Auto Reload | Automatically reload when empty and firing | check |
+| Reload Type | How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Ammo Regeneration: Ammo regenerates automatically over time after firing | combo |
 
 
 ---
@@ -67,15 +67,17 @@ npm run dev
 | Set max ammo | Set the maximum ammunition capacity | Max Ammo             *(number)* <br> |
 | Subtract ammo | Subtract ammunition from current count | Amount             *(number)* <br> |
 | Fire | Fire the weapon (respects fire mode, ammo, and cooldown) |  |
+| Reset fire cooldown | Instantly reset the fire cooldown, allowing immediate firing |  |
 | Set burst count | Set the number of shots in burst fire mode | Burst Count             *(number)* <br> |
 | Set fire mode | Set the weapon's fire mode | Fire Mode             *(combo)* <br> |
 | Set fire rate | Set the time between shots in seconds | Fire Rate             *(number)* <br> |
-| Set image point | Set the image point index for projectile spawning | Image Point             *(number)* <br> |
 | Cancel reload | Cancel the current reload |  |
 | Instant reload | Instantly reload the weapon to max ammo |  |
+| Reload bullets | Instantly reload a number of bullets (for Per-Bullet reload type) | Count             *(number)* <br> |
 | Start reload | Start reloading the weapon |  |
 | Set auto reload | Enable or disable auto reload when empty | Enabled             *(combo)* <br> |
 | Set reload time | Set the reload duration in seconds | Reload Time             *(number)* <br> |
+| Set reload type | Set how the weapon reloads ammunition, Magazine: Traditional - press reload, wait full time, get full ammo, Per-Bullet: Reloads one bullet at a time over reload time, Charge-Based: Gradually reloads ammo over time | Reload Type             *(combo)* <br> |
 
 
 ---
@@ -85,11 +87,15 @@ npm run dev
 | Compare current ammo | Compare the current ammo count | Comparison *(cmp)* <br>Value *(number)* <br> |
 | Has ammo | True if the weapon has at least 1 ammo |  |
 | Is ammo full | True if current ammo equals max ammo |  |
+| On add ammo | Triggered when ammo is added to the weapon |  |
 | On empty | Triggered when trying to fire with no ammo |  |
 | Can fire | True if the weapon can fire (has ammo, not reloading, cooldown elapsed) |  |
 | Compare fire mode | Check if the weapon is in a specific fire mode | Fire Mode *(combo)* <br> |
 | On fire | Triggered when the weapon fires a shot |  |
+| Compare reload type | Compare the current reload type | Reload Type *(combo)* <br> |
 | Is reloading | True if the weapon is currently reloading |  |
+| On partial reload | Triggered when one bullet is loaded (Per-Bullet reload type only) |  |
+| On partial reload start | Triggered when per-bullet reload begins loading a bullet |  |
 | On reload complete | Triggered when reload finishes |  |
 | On reload start | Triggered when reload begins |  |
 
@@ -102,15 +108,14 @@ npm run dev
 | CurrentAmmo | Get the current ammunition count | number |  | 
 | MaxAmmo | Get the maximum ammunition capacity | number |  | 
 | BurstCount | Get the number of shots in burst fire mode | number |  | 
+| FireCooldown | Get the current fire cooldown remaining (in seconds) | number |  | 
+| FireCooldownProgress | Get fire cooldown progress as a percentage (0-1, where 100 means ready to fire) | number |  | 
 | FireMode | Get the current fire mode ("single", "automatic", or "burst") | string |  | 
 | FireRate | Get the fire rate (time between shots in seconds) | number |  | 
-| ImagePoint | Get the image point index for projectile spawning | number |  | 
-| SpawnAngle | Get the angle for spawning projectiles (with spread applied, in degrees) | number |  | 
-| SpawnX | Get the X position for spawning projectiles (at image point) | number |  | 
-| SpawnY | Get the Y position for spawning projectiles (at image point) | number |  | 
 | Reloading | Returns 1 if reloading, 0 if not | number |  | 
-| ReloadProgress | Get reload progress as percentage (0-100) | number |  | 
+| ReloadProgress | Get reload progress as percentage (0-1, where 1 means reload complete) | number |  | 
 | ReloadTime | Get the reload duration in seconds | number |  | 
+| ReloadType | Get the current reload type (magazine, per_bullet, or charge_based) | string |  | 
 
 
 ---

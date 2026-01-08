@@ -16,7 +16,8 @@ export default function (parentClass) {
       this._burstDelay = Number(props[5]) || 0.05;
       this._reloadTime = Number(props[6]) || 2.0;
       this._autoReload = Boolean(props[7]);
-      this._reloadType = String(props[8]) || "magazine"; // magazine, per_bullet, charge_based
+      this._reloadType = String(props[8]) || "magazine"; // magazine, per_bullet, ammo_regen
+      this._regenDelay = Number(props[9]) || 1.0;
       
       // Internal state
       this._fireCooldown = 0;
@@ -25,11 +26,8 @@ export default function (parentClass) {
       this._burstShotsRemaining = 0;
       this._burstTimer = 0;
       
-      // Charge-based reload: track individual charge cooldowns
-      this._chargeCooldowns = [];
-      for (let i = 0; i < this._maxAmmo; i++) {
-        this._chargeCooldowns.push(0);
-      }
+      // Ammo regeneration: delay before regeneration starts
+      this._regenDelayTimer = 0;
 
       // / If enabled, start calling _tick() to processtimer updates
       this._setTicking(true);
@@ -48,24 +46,31 @@ export default function (parentClass) {
       }
       
       // Handle reload based on type
-      if (this._reloadType === "charge_based") {
-        // Update individual charge cooldowns
-        let anyChargeReloading = false;
-        for (let i = 0; i < this._chargeCooldowns.length; i++) {
-          if (this._chargeCooldowns[i] > 0) {
-            this._chargeCooldowns[i] -= dt;
-            if (this._chargeCooldowns[i] <= 0) {
-              this._chargeCooldowns[i] = 0;
-              if (this._currentAmmo < this._maxAmmo) {
-                this._currentAmmo++;
-                this._trigger("OnReloadComplete");
-              }
-            } else {
-              anyChargeReloading = true;
+      if (this._reloadType === "ammo_regen") {
+        // Ammo regeneration: wait for delay, then regenerate
+        if (this._regenDelayTimer > 0) {
+          this._regenDelayTimer -= dt;
+        } else if (this._currentAmmo < this._maxAmmo) {
+          // Calculate regen rate (1 ammo per reload_time seconds)
+          const ammoToAdd = (1 / this._reloadTime) * dt;
+          const oldAmmo = Math.floor(this._currentAmmo);
+          
+          this._currentAmmo = Math.min(this._currentAmmo + ammoToAdd, this._maxAmmo);
+          
+          // Trigger events when ammo increases to next whole number
+          const newAmmo = Math.floor(this._currentAmmo);
+          if (newAmmo > oldAmmo) {
+            this._trigger("OnPartialReload");
+            
+            if (this._currentAmmo >= this._maxAmmo) {
+              this._trigger("OnReloadComplete");
             }
           }
+          
+          this._isReloading = true;
+        } else {
+          this._isReloading = false;
         }
-        this._isReloading = anyChargeReloading;
       } else if (this._isReloading) {
         this._reloadTimer -= dt;
         if (this._reloadTimer <= 0) {
@@ -112,18 +117,11 @@ export default function (parentClass) {
       this._currentAmmo--;
       this._fireCooldown = this._fireRate;
       
-      // For charge-based, start cooldown for the used charge
-      if (this._reloadType === "charge_based") {
-        // Find first available charge slot and start its cooldown
-        for (let i = 0; i < this._chargeCooldowns.length; i++) {
-          if (this._chargeCooldowns[i] === 0) {
-            this._chargeCooldowns[i] = this._reloadTime;
-            this._isReloading = true;
-            if (this._currentAmmo === 0) {
-              this._trigger("OnReloadStart");
-            }
-            break;
-          }
+      // For ammo regeneration, reset delay timer after firing
+      if (this._reloadType === "ammo_regen") {
+        this._regenDelayTimer = this._regenDelay;
+        if (this._currentAmmo === 0) {
+          this._trigger("OnReloadStart");
         }
       }
       
@@ -161,6 +159,27 @@ export default function (parentClass) {
     _startBurst() {
       if (this._burstShotsRemaining > 0) return false;
       
+      // Check ammo only once for the entire burst
+      if (this._currentAmmo <= 0) {
+        this._trigger("OnEmpty");
+        if (this._autoReload) {
+          this.startReload();
+        }
+        return false;
+      }
+      
+      // Consume one ammo for the entire burst
+      this._currentAmmo--;
+      this._fireCooldown = this._fireRate;
+      
+      // Reset regen delay for ammo regeneration
+      if (this._reloadType === "ammo_regen") {
+        this._regenDelayTimer = this._regenDelay;
+        if (this._currentAmmo === 0) {
+          this._trigger("OnReloadStart");
+        }
+      }
+      
       this._burstShotsRemaining = this._burstCount;
       this._fireBurstShot();
       return true;
@@ -173,17 +192,13 @@ export default function (parentClass) {
         return;
       }
       
-      if (this._currentAmmo > 0) {
-        this._fireSingleShot();
-        this._burstShotsRemaining--;
-        
-        if (this._burstShotsRemaining > 0 && this._currentAmmo > 0) {
-          this._burstTimer = this._burstDelay;
-        } else {
-          this._burstTimer = 0;
-        }
+      // Trigger fire event for each shot in burst
+      this._trigger("OnFire");
+      this._burstShotsRemaining--;
+      
+      if (this._burstShotsRemaining > 0) {
+        this._burstTimer = this._burstDelay;
       } else {
-        this._burstShotsRemaining = 0;
         this._burstTimer = 0;
       }
     }
@@ -195,13 +210,9 @@ export default function (parentClass) {
       
       this._isReloading = true;
       
-      if (this._reloadType === "charge_based") {
-        // Start cooldown for all empty charges
-        for (let i = 0; i < this._maxAmmo - this._currentAmmo; i++) {
-          if (this._chargeCooldowns[i] === 0) {
-            this._chargeCooldowns[i] = this._reloadTime;
-          }
-        }
+      if (this._reloadType === "ammo_regen") {
+        // Start regeneration immediately (skip delay)
+        this._regenDelayTimer = 0;
       } else {
         this._reloadTimer = this._reloadTime;
       }
@@ -213,12 +224,14 @@ export default function (parentClass) {
 
     // Reload one bullet (for per-bullet reload type)
     _reloadOneBullet() {
+      this._trigger("OnPartialReloadStart");
       this._currentAmmo++;
-      this._trigger("OnReloadComplete");
+      this._trigger("OnPartialReload");
       
       if (this._currentAmmo >= this._maxAmmo) {
         this._isReloading = false;
         this._reloadTimer = 0;
+        this._trigger("OnReloadComplete");
       } else {
         // Continue reloading next bullet
         this._reloadTimer = this._reloadTime;
@@ -240,11 +253,9 @@ export default function (parentClass) {
       this._isReloading = false;
       this._reloadTimer = 0;
       
-      // For charge-based, clear all charge cooldowns
-      if (this._reloadType === "charge_based") {
-        for (let i = 0; i < this._chargeCooldowns.length; i++) {
-          this._chargeCooldowns[i] = 0;
-        }
+      // For ammo regeneration, reset delay timer
+      if (this._reloadType === "ammo_regen") {
+        this._regenDelayTimer = 0;
       }
       
       return true;
@@ -302,14 +313,10 @@ export default function (parentClass) {
       if (!this._isReloading) return 0;
       if (this._reloadTime <= 0) return 1;
       
-      if (this._reloadType === "charge_based") {
-        // Return progress of first reloading charge
-        for (let i = 0; i < this._chargeCooldowns.length; i++) {
-          if (this._chargeCooldowns[i] > 0) {
-            return 1 - (this._chargeCooldowns[i] / this._reloadTime);
-          }
-        }
-        return 0;
+      if (this._reloadType === "ammo_regen") {
+        // Return overall ammo percentage
+        if (this._maxAmmo <= 0) return 0;
+        return this._currentAmmo / this._maxAmmo;
       }
       
       return 1 - (this._reloadTimer / this._reloadTime);
@@ -336,9 +343,10 @@ export default function (parentClass) {
         reloadTime: this._reloadTime,
         autoReload: this._autoReload,
         reloadType: this._reloadType,
+        regenDelay: this._regenDelay,
         isReloading: this._isReloading,
         reloadTimer: this._reloadTimer,
-        chargeCooldowns: this._chargeCooldowns,
+        regenDelayTimer: this._regenDelayTimer,
       };
     }
 
@@ -352,20 +360,17 @@ export default function (parentClass) {
       this._reloadTime = o.reloadTime;
       this._autoReload = o.autoReload;
       this._reloadType = o.reloadType || "magazine";
+      this._regenDelay = o.regenDelay || 1.0;
       this._isReloading = o.isReloading;
       this._reloadTimer = o.reloadTimer || 0;
-      this._chargeCooldowns = o.chargeCooldowns || [];
-      
-      // Ensure charge cooldowns array is correct size
-      while (this._chargeCooldowns.length < this._maxAmmo) {
-        this._chargeCooldowns.push(0);
-      }
+      this._regenDelayTimer = o.regenDelayTimer || 0;
     }
 
     _getDebuggerProperties() {
       return [{
         title: "$" + this.behaviorType.name,
         properties: [
+          { name: "$reloadtype", value: this._reloadType },
           { name: "$currentAmmo", value: this._currentAmmo, onedit: v => this._currentAmmo = v },
           { name: "$maxAmmo", value: this._maxAmmo, onedit: v => this._maxAmmo = v },
           { name: "$fireRate", value: this._fireRate, onedit: v => this._fireRate = v },
