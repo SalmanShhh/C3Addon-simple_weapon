@@ -515,12 +515,12 @@ expression(
     highlight: false,
     deprecated: false,
     returnType: "number",
-    description: "Get ammo as a percentage (0-100)",
+    description: "Get ammo as a percentage (0-1)",
     params: [],
   },
   function () {
     if (this._maxAmmo <= 0) return 0;
-    return (this._currentAmmo / this._maxAmmo) * 100;
+    return (this._currentAmmo / this._maxAmmo);
   }
 );
 

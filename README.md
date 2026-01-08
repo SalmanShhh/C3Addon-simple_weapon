@@ -1,15 +1,37 @@
 <img src="./src/icon.svg" width="100" /><br>
 # Simple Weapon
 <i>Handle firing, reloading, ammo management, and multiple fire modes without complex events. Perfect for shooters, action games, and any project needing weapon systems.</i> <br>
-### Version 0.0.0.0
+### Version 1.0.0.0
 
-[<img src="https://placehold.co/200x50/4493f8/FFF?text=Download&font=montserrat" width="200"/>](https://github.com/SalmanShhh/simple_weapon/releases/download/salmanshh_simple_weapon-0.0.0.0.c3addon/salmanshh_simple_weapon-0.0.0.0.c3addon)
+[<img src="https://placehold.co/200x50/4493f8/FFF?text=Download&font=montserrat" width="200"/>](https://github.com/SalmanShhh/simple_weapon/releases/download/salmanshh_simple_weapon-1.0.0.0.c3addon/salmanshh_simple_weapon-1.0.0.0.c3addon)
 <br>
 <sub> [See all releases](https://github.com/SalmanShhh/simple_weapon/releases) </sub> <br>
 
-#### What's New in 0.0.0.0
+#### What's New in 1.0.0.0
 **Added:**
-Initial release.
+- Firing
+Fire weapon with customizable fire rate
+3 fire modes: Single Shot, Automatic, Burst Fire
+Fire cooldown system prevents rapid firing
+OnFire trigger for spawning projectiles/effects
+
+- Ammo System
+Max ammo capacity
+Current ammo tracking
+Add/subtract/set ammo via actions
+OnEmpty trigger when out of ammo
+
+Save/Load Support:
+
+- Reload System
+3 reload types:
+Magazine: Reload all at once (traditional)
+Per-Bullet: Load bullets one at a time (shotgun-style)
+Ammo Regeneration: Automatic regeneration over time
+Auto-reload option when empty
+Manual reload action
+OnReloadStart, OnReloadComplete, OnPartialReload triggers
+Reload progress tracking (0-100%)
 
 
 <sub>[View full changelog](#changelog)</sub>
@@ -53,9 +75,10 @@ npm run dev
 | Fire Mode | The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull | combo |
 | Burst Count | Number of shots in burst fire mode | integer |
 | Burst Delay | Time between shots in a burst (seconds) | float |
-| Reload Time | Time to reload in seconds (or per bullet for Per-Bullet type) | float |
+| Reload Time | Time to reload in seconds (or per bullet for Per-Bullet type, or ammo regen rate for Ammo Regeneration) | float |
 | Auto Reload | Automatically reload when empty and firing | check |
 | Reload Type | How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time; Ammo Regeneration: Ammo regenerates automatically over time after firing | combo |
+| Regeneration Delay | Delay in seconds before ammo regeneration starts after firing (for Ammo Regeneration type only) | float |
 
 
 ---
@@ -104,7 +127,7 @@ npm run dev
 ## Expressions
 | Expression | Description | Return Type | Params
 | --- | --- | --- | --- |
-| AmmoPercent | Get ammo as a percentage (0-100) | number |  | 
+| AmmoPercent | Get ammo as a percentage (0-1) | number |  | 
 | CurrentAmmo | Get the current ammunition count | number |  | 
 | MaxAmmo | Get the maximum ammunition capacity | number |  | 
 | BurstCount | Get the number of shots in burst fire mode | number |  | 
@@ -120,6 +143,35 @@ npm run dev
 
 ---
 ## Changelog
+
+### Version 1.0.0.0
+
+**Added:**
+- Firing
+Fire weapon with customizable fire rate
+3 fire modes: Single Shot, Automatic, Burst Fire
+Fire cooldown system prevents rapid firing
+OnFire trigger for spawning projectiles/effects
+
+- Ammo System
+Max ammo capacity
+Current ammo tracking
+Add/subtract/set ammo via actions
+OnEmpty trigger when out of ammo
+
+Save/Load Support:
+
+- Reload System
+3 reload types:
+Magazine: Reload all at once (traditional)
+Per-Bullet: Load bullets one at a time (shotgun-style)
+Ammo Regeneration: Automatic regeneration over time
+Auto-reload option when empty
+Manual reload action
+OnReloadStart, OnReloadComplete, OnPartialReload triggers
+Reload progress tracking (0-100%)
+
+---
 
 ### Version 0.0.0.0
 

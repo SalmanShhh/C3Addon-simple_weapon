@@ -349,7 +349,7 @@
         "expressions": {
           "AmmoPercent": {
             "translated-name": "AmmoPercent",
-            "description": "Get ammo as a percentage (0-100)",
+            "description": "Get ammo as a percentage (0-1)",
             "params": {}
           },
           "CurrentAmmo": {
