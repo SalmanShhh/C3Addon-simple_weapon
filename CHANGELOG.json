@@ -8,5 +8,10 @@
     "added": "- Firing\nFire weapon with customizable fire rate\n3 fire modes: Single Shot, Automatic, Burst Fire\nFire cooldown system prevents rapid firing\nOnFire trigger for spawning projectiles/effects\n\n- Ammo System\nMax ammo capacity\nCurrent ammo tracking\nAdd/subtract/set ammo via actions\nOnEmpty trigger when out of ammo\n\nSave/Load Support:\n\n- Reload System\n3 reload types:\nMagazine: Reload all at once (traditional)\nPer-Bullet: Load bullets one at a time (shotgun-style)\nAmmo Regeneration: Automatic regeneration over time\nAuto-reload option when empty\nManual reload action\nOnReloadStart, OnReloadComplete, OnPartialReload triggers\nReload progress tracking (0-100%)",
     "changed": "",
     "fixed": ""
+  },
+  "1.1.0.0": {
+    "added": "",
+    "changed": "removed Reload Type - Ammo Regeneration.",
+    "fixed": ""
   }
 }
