@@ -16,7 +16,8 @@ export default function (parentClass) {
       this._burstDelay = Number(props[5]) || 0.05;
       this._reloadTime = Number(props[6]) || 2.0;
       this._autoReload = Boolean(props[7]);
-      this._reloadType = String(props[8]) || "magazine"; // magazine, per_bullet
+      this._reloadType = String(props[8]) || "magazine"; // magazine, per_bullet, speed_reload, passive_reload
+      this._reserveAmmo = Number(props[9]) || 0; // 0 = infinite reserves
       
       // Internal state
       this._fireCooldown = 0;
@@ -24,12 +25,23 @@ export default function (parentClass) {
       this._reloadTimer = 0;
       this._burstShotsRemaining = 0;
       this._burstTimer = 0;
+      this._passiveReloadAccumulator = 0; // Tracks fractional ammo for passive reload
 
-      // / If enabled, start calling _tick() to processtimer updates
+      // Enable ticking for timer updates
       this._setTicking(true);
     }
 
     _tick() {
+      // Performance optimization: Early return if nothing is active
+      const hasActiveCooldown = this._fireCooldown > 0;
+      const hasActiveReload = this._isReloading;
+      const hasActiveBurst = this._burstShotsRemaining > 0;
+      const hasPassiveReload = this._reloadType === "passive_reload" && this._currentAmmo < this._maxAmmo;
+      
+      if (!hasActiveCooldown && !hasActiveReload && !hasActiveBurst && !hasPassiveReload) {
+        return;
+      }
+      
       // Get delta-time from the associated instance, to take in to account the instance's own time scale
       const dt = this.instance.dt;
       
@@ -38,6 +50,33 @@ export default function (parentClass) {
         this._fireCooldown -= dt;
         if (this._fireCooldown < 0) {
           this._fireCooldown = 0;
+        }
+      }
+      
+      // Handle passive reload - regenerate ammo over time
+      if (this._reloadType === "passive_reload" && this._currentAmmo < this._maxAmmo) {
+        // Use _reloadTime as seconds per bullet (e.g., 2.0 = 1 bullet every 2 seconds)
+        const reloadRate = this._reloadTime > 0 ? (1.0 / this._reloadTime) : 1.0; // bullets per second
+        this._passiveReloadAccumulator += reloadRate * dt;
+        
+        // Add whole bullets when accumulator reaches 1.0
+        if (this._passiveReloadAccumulator >= 1.0) {
+          const bulletsToAdd = Math.floor(this._passiveReloadAccumulator);
+          this._passiveReloadAccumulator -= bulletsToAdd;
+          
+          const oldAmmo = this._currentAmmo;
+          this._currentAmmo = Math.min(this._currentAmmo + bulletsToAdd, this._maxAmmo);
+          
+          // Trigger partial reload for each bullet added
+          if (this._currentAmmo > oldAmmo) {
+            this._trigger("OnPartialReload");
+            
+            // If we reached max, trigger reload complete
+            if (this._currentAmmo >= this._maxAmmo) {
+              this._passiveReloadAccumulator = 0;
+              this._trigger("OnReloadComplete");
+            }
+          }
         }
       }
       
@@ -163,8 +202,22 @@ export default function (parentClass) {
       if (this._isReloading) return false;
       if (this._currentAmmo >= this._maxAmmo) return false;
       
+      // Speed reload: check if we have reserve ammo available
+      if (this._reloadType === "speed_reload") {
+        // If reserves are 0 (infinite) or we have ammo, allow reload
+        if (this._reserveAmmo !== 0 && this._reserveAmmo < this._maxAmmo) {
+          return false; // Not enough reserve ammo
+        }
+      }
+      
       this._isReloading = true;
-      this._reloadTimer = this._reloadTime;
+      
+      // For per-bullet reload, divide total reload time by max ammo
+      if (this._reloadType === "per_bullet" && this._maxAmmo > 0) {
+        this._reloadTimer = this._reloadTime / this._maxAmmo;
+      } else {
+        this._reloadTimer = this._reloadTime;
+      }
       
       this._trigger("OnReloadStart");
       
@@ -182,14 +235,31 @@ export default function (parentClass) {
         this._reloadTimer = 0;
         this._trigger("OnReloadComplete");
       } else {
-        // Continue reloading next bullet
-        this._reloadTimer = this._reloadTime;
+        // Continue reloading next bullet using divided reload time
+        this._reloadTimer = this._maxAmmo > 0 ? (this._reloadTime / this._maxAmmo) : this._reloadTime;
       }
     }
 
     // Complete reload
     _completeReload() {
-      this._currentAmmo = this._maxAmmo;
+      if (this._reloadType === "speed_reload") {
+        // Speed reload: discard remaining ammo and reload from reserves
+        const ammoNeeded = this._maxAmmo;
+        
+        if (this._reserveAmmo === 0) {
+          // Infinite reserves
+          this._currentAmmo = this._maxAmmo;
+        } else {
+          // Limited reserves
+          const ammoToLoad = Math.min(ammoNeeded, this._reserveAmmo);
+          this._reserveAmmo -= ammoToLoad;
+          this._currentAmmo = ammoToLoad;
+        }
+      } else {
+        // Standard magazine reload
+        this._currentAmmo = this._maxAmmo;
+      }
+      
       this._isReloading = false;
       this._reloadTimer = 0;
       this._trigger("OnReloadComplete");
@@ -203,28 +273,6 @@ export default function (parentClass) {
       this._reloadTimer = 0;
       
       return true;
-    }
-
-    // Get spawn position at origin
-    getSpawnPosition() {
-      const inst = this.instance;
-      if (!inst) {
-        console.warn("No instance available in getSpawnPosition");
-        return { x: 0, y: 0, angle: 0 };
-      }
-      
-      const wi = inst.GetWorldInfo();
-      if (!wi){
-        console.warn("No WorldInfo available in getSpawnPosition");
-         return { x: 0, y: 0, angle: 0 };
-      }
-      
-      // Always use origin position
-      const x = wi.GetX();
-      const y = wi.GetY();
-      const angle = wi.GetAngle();
-      
-      return { x, y, angle };
     }
 
     // Set fire mode
@@ -283,6 +331,8 @@ export default function (parentClass) {
         reloadType: this._reloadType,
         isReloading: this._isReloading,
         reloadTimer: this._reloadTimer,
+        reserveAmmo: this._reserveAmmo,
+        passiveReloadAccumulator: this._passiveReloadAccumulator,
       };
     }
 
@@ -298,6 +348,8 @@ export default function (parentClass) {
       this._reloadType = o.reloadType || "magazine";
       this._isReloading = o.isReloading;
       this._reloadTimer = o.reloadTimer || 0;
+      this._reserveAmmo = o.reserveAmmo !== undefined ? o.reserveAmmo : 0;
+      this._passiveReloadAccumulator = o.passiveReloadAccumulator || 0;
     }
 
     _getDebuggerProperties() {
@@ -307,6 +359,7 @@ export default function (parentClass) {
           { name: "$reloadtype", value: this._reloadType },
           { name: "$currentAmmo", value: this._currentAmmo, onedit: v => this._currentAmmo = v },
           { name: "$maxAmmo", value: this._maxAmmo, onedit: v => this._maxAmmo = v },
+          { name: "$reserveAmmo", value: this._reserveAmmo, onedit: v => this._reserveAmmo = v },
           { name: "$fireRate", value: this._fireRate, onedit: v => this._fireRate = v },
           { name: "$fireMode", value: this.getFireModeString() },
           { name: "$burstCount", value: this._burstCount, onedit: v => this._burstCount = v },

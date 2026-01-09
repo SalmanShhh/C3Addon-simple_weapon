@@ -689,7 +689,7 @@ action(
     isAsync: false,
     listName: "Set reload type",
     displayText: "{my}: Set reload type to {0}",
-    description: "Set how the weapon reloads ammunition, Magazine: Traditional - press reload, wait full time, get full ammo, Per-Bullet: Reloads one bullet at a time over reload time, Charge-Based: Gradually reloads ammo over time",
+    description: "Set how the weapon reloads. Magazine: Manual reload restores max ammo after reload time. Per-Bullet: Manual reload adds bullets sequentially (total time ÷ max ammo each). Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration (reload time per bullet).",
     params: [
       {
         id: "reloadType",
@@ -700,6 +700,8 @@ action(
         items: [
           { magazine: "Magazine Reload" },
           { per_bullet: "Per-Bullet Reload" },
+          { speed_reload: "Speed Reload" },
+          { passive_reload: "Passive Reload" },
         ],
       },
     ],
@@ -748,6 +750,8 @@ condition(
         items: [
           { magazine: "Magazine Reload" },
           { per_bullet: "Per-Bullet Reload" },
+          { speed_reload: "Speed Reload" },
+          { passive_reload: "Passive Reload" },
         ],
       },
     ],
@@ -881,10 +885,97 @@ expression(
     highlight: false,
     deprecated: false,
     returnType: "string",
-    description: "Get the current reload type (magazine, per_bullet, or charge_based)",
+    description: "Get the current reload type (magazine, per_bullet, speed_reload, or passive_reload)",
     params: [],
   },
   function () {
     return this._reloadType || "magazine";
+  }
+);
+
+expression(
+  reload,
+  "PerBulletReloadTime",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the reload time per bullet based on reload type. For Per-Bullet reload: ReloadTime / MaxAmmo. For Passive reload: ReloadTime (seconds per bullet). Otherwise: full ReloadTime",
+    params: [],
+  },
+  function () {
+    if (this._reloadType === "per_bullet" && this._maxAmmo > 0) {
+      return this._reloadTime / this._maxAmmo;
+    } else if (this._reloadType === "passive_reload") {
+      return this._reloadTime;
+    } else {
+      return this._reloadTime;
+    }
+  }
+);
+
+action(
+  reload,
+  "SetReserveAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Set reserve ammo",
+    displayText: "{my}: Set reserve ammo to {0}",
+    description: "Set the reserve ammunition count for Speed Reload (0 = infinite)",
+    params: [
+      {
+        id: "amount",
+        name: "Amount",
+        desc: "Reserve ammo amount (0 for infinite)",
+        type: "number",
+        initialValue: "90",
+      },
+    ],
+  },
+  function (amount) {
+    this._reserveAmmo = Math.max(0, Math.floor(amount));
+  }
+);
+
+action(
+  reload,
+  "AddReserveAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    isAsync: false,
+    listName: "Add reserve ammo",
+    displayText: "{my}: Add {0} to reserve ammo",
+    description: "Add ammunition to the reserve pool for Speed Reload",
+    params: [
+      {
+        id: "amount",
+        name: "Amount",
+        desc: "Amount to add",
+        type: "number",
+        initialValue: "30",
+      },
+    ],
+  },
+  function (amount) {
+    if (this._reserveAmmo === 0) return; // Infinite reserves, don't add
+    this._reserveAmmo += Math.max(0, Math.floor(amount));
+  }
+);
+
+expression(
+  reload,
+  "ReserveAmmo",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the current reserve ammo count (0 = infinite reserves)",
+    params: [],
+  },
+  function () {
+    return this._reserveAmmo;
   }
 );

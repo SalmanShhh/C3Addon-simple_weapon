@@ -157,7 +157,7 @@ export const properties = [
       minValue: 0,
     },
     name: "Reload Time",
-    desc: "Time to reload in seconds (or per bullet for Per-Bullet type, or ammo regen rate for Ammo Regeneration)",
+    desc: "Time in seconds. Magazine/Speed: Full reload duration. Per-Bullet: Total time to reload all bullets (divided by max ammo per bullet). Passive: Seconds to regenerate one bullet.",
   },
   {
     type: PROPERTY_TYPE.CHECK,
@@ -176,9 +176,21 @@ export const properties = [
       items: [
         { magazine: "Magazine Reload" },
         { per_bullet: "Per-Bullet Reload" },
+        { speed_reload: "Speed Reload" },
+        { passive_reload: "Passive Reload" },
       ],
     },
     name: "Reload Type",
-    desc: "How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time",
+    desc: "How the weapon reloads. Magazine: Manual reload, restores max ammo after reload time. Per-Bullet: Manual reload, adds bullets one-by-one (total reload time ÷ max ammo per bullet). Speed Reload: Manual reload, discards remaining ammo and consumes from reserve pool. Passive Reload: Automatic regeneration (reload time = seconds per bullet).",
+  },
+  {
+    type: PROPERTY_TYPE.INTEGER,
+    id: "reserve_ammo",
+    options: {
+      initialValue: 0,
+      minValue: 0,
+    },
+    name: "Reserve Ammo",
+    desc: "Reserve ammunition pool for Speed Reload (set to 0 for infinite reserves)",
   },
 ];

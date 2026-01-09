@@ -44,7 +44,7 @@
           },
           "reload_time": {
             "name": "Reload Time",
-            "desc": "Time to reload in seconds (or per bullet for Per-Bullet type, or ammo regen rate for Ammo Regeneration)"
+            "desc": "Time in seconds. Magazine/Speed: Full reload duration. Per-Bullet: Total time to reload all bullets (divided by max ammo per bullet). Passive: Seconds to regenerate one bullet."
           },
           "auto_reload": {
             "name": "Auto Reload",
@@ -52,11 +52,17 @@
           },
           "reload_type": {
             "name": "Reload Type",
-            "desc": "How the weapon reloads ammunition. Magazine: Traditional - press reload, wait full time, get full ammo; Per-Bullet: Reloads one bullet at a time over reload time",
+            "desc": "How the weapon reloads. Magazine: Manual reload, restores max ammo after reload time. Per-Bullet: Manual reload, adds bullets one-by-one (total reload time ÷ max ammo per bullet). Speed Reload: Manual reload, discards remaining ammo and consumes from reserve pool. Passive Reload: Automatic regeneration (reload time = seconds per bullet).",
             "items": {
               "magazine": "Magazine Reload",
-              "per_bullet": "Per-Bullet Reload"
+              "per_bullet": "Per-Bullet Reload",
+              "speed_reload": "Speed Reload",
+              "passive_reload": "Passive Reload"
             }
+          },
+          "reserve_ammo": {
+            "name": "Reserve Ammo",
+            "desc": "Reserve ammunition pool for Speed Reload (set to 0 for infinite reserves)"
           }
         },
         "actions": {
@@ -154,6 +160,17 @@
               }
             }
           },
+          "AddReserveAmmo": {
+            "list-name": "Add reserve ammo",
+            "display-text": "{my}: Add {0} to reserve ammo",
+            "description": "Add ammunition to the reserve pool for Speed Reload",
+            "params": {
+              "amount": {
+                "name": "Amount",
+                "desc": "Amount to add"
+              }
+            }
+          },
           "CancelReload": {
             "list-name": "Cancel reload",
             "display-text": "{my}: Cancel reload",
@@ -212,15 +229,28 @@
           "SetReloadType": {
             "list-name": "Set reload type",
             "display-text": "{my}: Set reload type to {0}",
-            "description": "Set how the weapon reloads ammunition, Magazine: Traditional - press reload, wait full time, get full ammo, Per-Bullet: Reloads one bullet at a time over reload time, Charge-Based: Gradually reloads ammo over time",
+            "description": "Set how the weapon reloads. Magazine: Manual reload restores max ammo after reload time. Per-Bullet: Manual reload adds bullets sequentially (total time ÷ max ammo each). Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration (reload time per bullet).",
             "params": {
               "reloadType": {
                 "name": "Reload Type",
                 "desc": "The reload type",
                 "items": {
                   "magazine": "Magazine Reload",
-                  "per_bullet": "Per-Bullet Reload"
+                  "per_bullet": "Per-Bullet Reload",
+                  "speed_reload": "Speed Reload",
+                  "passive_reload": "Passive Reload"
                 }
+              }
+            }
+          },
+          "SetReserveAmmo": {
+            "list-name": "Set reserve ammo",
+            "display-text": "{my}: Set reserve ammo to {0}",
+            "description": "Set the reserve ammunition count for Speed Reload (0 = infinite)",
+            "params": {
+              "amount": {
+                "name": "Amount",
+                "desc": "Reserve ammo amount (0 for infinite)"
               }
             }
           }
@@ -303,7 +333,9 @@
                 "desc": "The reload type to compare",
                 "items": {
                   "magazine": "Magazine Reload",
-                  "per_bullet": "Per-Bullet Reload"
+                  "per_bullet": "Per-Bullet Reload",
+                  "speed_reload": "Speed Reload",
+                  "passive_reload": "Passive Reload"
                 }
               }
             }
@@ -380,6 +412,11 @@
             "description": "Get the fire rate (time between shots in seconds)",
             "params": {}
           },
+          "PerBulletReloadTime": {
+            "translated-name": "PerBulletReloadTime",
+            "description": "Get the reload time per bullet based on reload type. For Per-Bullet reload: ReloadTime / MaxAmmo. For Passive reload: ReloadTime (seconds per bullet). Otherwise: full ReloadTime",
+            "params": {}
+          },
           "Reloading": {
             "translated-name": "Reloading",
             "description": "Returns 1 if reloading, 0 if not",
@@ -397,7 +434,12 @@
           },
           "ReloadType": {
             "translated-name": "ReloadType",
-            "description": "Get the current reload type (magazine, per_bullet, or charge_based)",
+            "description": "Get the current reload type (magazine, per_bullet, speed_reload, or passive_reload)",
+            "params": {}
+          },
+          "ReserveAmmo": {
+            "translated-name": "ReserveAmmo",
+            "description": "Get the current reserve ammo count (0 = infinite reserves)",
             "params": {}
           }
         }
