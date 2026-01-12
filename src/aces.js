@@ -832,7 +832,7 @@ condition(
     isInvertible: false,
     listName: "On reload start",
     displayText: "{my}: On reload start",
-    description: "Triggered when reload begins",
+    description: "Triggered when reload begins (Manual reload types and Passive Reload)",
     params: [],
   },
   function () {

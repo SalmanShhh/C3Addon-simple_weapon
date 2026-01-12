@@ -69,6 +69,7 @@ export default function (parentClass) {
       this._burstShotsRemaining = 0;
       this._burstTimer = 0;
       this._passiveReloadAccumulator = 0; // Tracks fractional ammo for passive reload
+      this._passiveReloadActive = false; // Tracks if passive reload is currently active
 
       // Enable ticking for timer updates
       this._setTicking(true);
@@ -96,6 +97,12 @@ export default function (parentClass) {
       
       // Handle passive reload - regenerate ammo over time
       if (this._reloadType === 3 && this._currentAmmo < this._maxAmmo) {
+        // Trigger OnReloadStart when passive reload begins
+        if (!this._passiveReloadActive) {
+          this._passiveReloadActive = true;
+          this._trigger("OnReloadStart");
+        }
+        
         // Use _reloadTime as seconds per bullet (e.g., 2.0 = 1 bullet every 2 seconds)
         const reloadRate = this._reloadTime > 0 ? (1.0 / this._reloadTime) : 1.0; // bullets per second
         this._passiveReloadAccumulator += reloadRate * dt;
@@ -115,10 +122,14 @@ export default function (parentClass) {
             // If we reached max, trigger reload complete
             if (this._currentAmmo >= this._maxAmmo) {
               this._passiveReloadAccumulator = 0;
+              this._passiveReloadActive = false;
               this._trigger("OnReloadComplete");
             }
           }
         }
+      } else if (this._passiveReloadActive) {
+        // Reset passive reload flag when at max ammo or reload type changed
+        this._passiveReloadActive = false;
       }
       
       // Handle reload based on type

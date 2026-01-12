@@ -101,10 +101,10 @@ npm run dev
 | On fire | Triggered when the weapon fires a shot |  |
 | Compare reload type | Compare the current reload type | Reload Type *(combo)* <br> |
 | Is reloading | True if the weapon is currently reloading |  |
-| On partial reload | Triggered when one bullet is loaded (Per-Bullet reload type only) |  |
+| On partial reload | Triggered when one bullet is loaded (Per-Bullet and Passive Reload types) |  |
 | On partial reload start | Triggered when per-bullet reload begins loading a bullet |  |
 | On reload complete | Triggered when reload finishes |  |
-| On reload start | Triggered when reload begins |  |
+| On reload start | Triggered when reload begins (Manual reload types and Passive Reload) |  |
 
 
 ---
