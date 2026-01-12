@@ -1,11 +1,11 @@
 {
   "languageTag": "en-US",
-  "fileDescription": "Strings for salmanshh_simple_weapon.",
+  "fileDescription": "Strings for salmanshh_weaponkit.",
   "text": {
     "behaviors": {
-      "salmanshh_simple_weapon": {
-        "name": "Simple Weapon",
-        "description": "Handle firing, reloading, ammo management, and multiple fire modes without complex events. Perfect for shooters, action games, and any project needing weapon systems.",
+      "salmanshh_weaponkit": {
+        "name": "WeaponKit",
+        "description": "Build shooter mechanics in minutes, not hours. Handles firing modes (single/auto/burst), four reload types (magazine/per-bullet/speed/passive), ammo pools, and fire rate cooldowns. Comprehensive triggers and expressions let you create everything from pistols to miniguns without event spaghetti.",
         "help-url": "https://www.construct.net",
         "aceCategories": {
           "Ammo": "Ammo",
@@ -15,7 +15,7 @@
         "properties": {
           "max_ammo": {
             "name": "Max Ammo",
-            "desc": "Maximum ammunition capacity"
+            "desc": "Maximum ammunition capacity (set to -1 for infinite ammo)"
           },
           "starting_ammo": {
             "name": "Starting Ammo",
@@ -27,7 +27,7 @@
           },
           "fire_mode": {
             "name": "Fire Mode",
-            "desc": "The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull",
+            "desc": "Single Shot: Fires one bullet per Fire action call (semi-automatic, pistol/rifle). Automatic: Fires continuously each fire rate interval per Fire action (machine gun, SMG). Burst Fire: Fires multiple shots in quick succession per Fire action (burst rifles, consumes 1 ammo per burst).",
             "items": {
               "single": "Single Shot",
               "automatic": "Automatic",
@@ -46,10 +46,6 @@
             "name": "Reload Time",
             "desc": "Time in seconds. Magazine/Speed: Full reload duration. Per-Bullet: Total time to reload all bullets (divided by max ammo per bullet). Passive: Seconds to regenerate one bullet."
           },
-          "auto_reload": {
-            "name": "Auto Reload",
-            "desc": "Automatically reload when empty and firing"
-          },
           "reload_type": {
             "name": "Reload Type",
             "desc": "How the weapon reloads. Magazine: Manual reload, restores max ammo after reload time. Per-Bullet: Manual reload, adds bullets one-by-one (total reload time ÷ max ammo per bullet). Speed Reload: Manual reload, discards remaining ammo and consumes from reserve pool. Passive Reload: Automatic regeneration (reload time = seconds per bullet).",
@@ -60,9 +56,9 @@
               "passive_reload": "Passive Reload"
             }
           },
-          "reserve_ammo": {
-            "name": "Reserve Ammo",
-            "desc": "Reserve ammunition pool for Speed Reload (set to 0 for infinite reserves)"
+          "auto_reload": {
+            "name": "Auto Reload",
+            "desc": "Automatically reload when empty and firing"
           }
         },
         "actions": {
@@ -229,7 +225,7 @@
           "SetReloadType": {
             "list-name": "Set reload type",
             "display-text": "{my}: Set reload type to {0}",
-            "description": "Set how the weapon reloads. Magazine: Manual reload restores max ammo after reload time. Per-Bullet: Manual reload adds bullets sequentially (total time ÷ max ammo each). Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration (reload time per bullet).",
+            "description": "Set how the weapon reloads. Magazine: Manual reload restores max ammo. Per-Bullet: Manual reload adds bullets sequentially. Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration.",
             "params": {
               "reloadType": {
                 "name": "Reload Type",
@@ -246,11 +242,11 @@
           "SetReserveAmmo": {
             "list-name": "Set reserve ammo",
             "display-text": "{my}: Set reserve ammo to {0}",
-            "description": "Set the reserve ammunition count for Speed Reload (0 = infinite)",
+            "description": "Set the reserve ammunition count for Speed Reload (-1 = infinite)",
             "params": {
               "amount": {
                 "name": "Amount",
-                "desc": "Reserve ammo amount (0 for infinite)"
+                "desc": "Reserve ammo amount (-1 for infinite)"
               }
             }
           }
@@ -387,9 +383,19 @@
             "description": "Get the maximum ammunition capacity",
             "params": {}
           },
+          "AutomaticFireModeID": {
+            "translated-name": "AutomaticFireModeID",
+            "description": "Returns the ID for Automatic fire mode (1)",
+            "params": {}
+          },
           "BurstCount": {
             "translated-name": "BurstCount",
             "description": "Get the number of shots in burst fire mode",
+            "params": {}
+          },
+          "BurstFireModeID": {
+            "translated-name": "BurstFireModeID",
+            "description": "Returns the ID for Burst Fire mode (2)",
             "params": {}
           },
           "FireCooldown": {
@@ -407,9 +413,19 @@
             "description": "Get the current fire mode (\"single\", \"automatic\", or \"burst\")",
             "params": {}
           },
+          "FireModeID": {
+            "translated-name": "FireModeID",
+            "description": "Get the current fire mode as a number (0=single, 1=automatic, 2=burst)",
+            "params": {}
+          },
           "FireRate": {
             "translated-name": "FireRate",
             "description": "Get the fire rate (time between shots in seconds)",
+            "params": {}
+          },
+          "SingleFireModeID": {
+            "translated-name": "SingleFireModeID",
+            "description": "Returns the ID for Single Shot fire mode (0)",
             "params": {}
           },
           "PerBulletReloadTime": {
@@ -437,9 +453,34 @@
             "description": "Get the current reload type (magazine, per_bullet, speed_reload, or passive_reload)",
             "params": {}
           },
+          "ReloadTypeID": {
+            "translated-name": "ReloadTypeID",
+            "description": "Get the current reload type as a number (0=magazine, 1=per_bullet, 2=speed_reload, 3=passive_reload)",
+            "params": {}
+          },
+          "ReloadTypeIDMagazine": {
+            "translated-name": "ReloadTypeIDMagazine",
+            "description": "Returns the ID for Magazine reload type (0)",
+            "params": {}
+          },
+          "ReloadTypeIDPassive": {
+            "translated-name": "ReloadTypeIDPassive",
+            "description": "Returns the ID for Passive Reload type (3)",
+            "params": {}
+          },
+          "ReloadTypeIDPerBullet": {
+            "translated-name": "ReloadTypeIDPerBullet",
+            "description": "Returns the ID for Per-Bullet reload type (1)",
+            "params": {}
+          },
+          "ReloadTypeIDSpeed": {
+            "translated-name": "ReloadTypeIDSpeed",
+            "description": "Returns the ID for Speed Reload type (2)",
+            "params": {}
+          },
           "ReserveAmmo": {
             "translated-name": "ReserveAmmo",
-            "description": "Get the current reserve ammo count (0 = infinite reserves)",
+            "description": "Get the current reserve ammo count (-1 = infinite reserves)",
             "params": {}
           }
         }

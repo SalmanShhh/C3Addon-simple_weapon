@@ -48,6 +48,7 @@ action(
     ],
   },
   function (mode) {
+    // Automatically passes the index (0, 1, 2, 3) of the selected combo item to the function, we use that to know which mode to set.
     this.setFireMode(mode);
   }
 );
@@ -162,7 +163,7 @@ condition(
     highlight: false,
     deprecated: false,
     isTrigger: false,
-    isInvertible: true,
+    isInvertible: false,
     listName: "Compare fire mode",
     displayText: "{my}: Fire mode is {0}",
     description: "Check if the weapon is in a specific fire mode",
@@ -182,7 +183,7 @@ condition(
     ],
   },
   function (mode) {
-    return this.getFireModeString() === mode;
+    return this._fireMode === mode;
   }
 );
 
@@ -247,6 +248,21 @@ expression(
 );
 
 expression(
+  firing,
+  "FireModeID",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the current fire mode as a number (0=single, 1=automatic, 2=burst)",
+    params: [],
+  },
+  function () {
+    return this._fireMode;
+  }
+);
+
+expression(
   firing,  "BurstCount",
   {
     highlight: false,
@@ -257,6 +273,51 @@ expression(
   },
   function () {
     return this._burstCount;
+  }
+);
+
+expression(
+  firing,
+  "SingleFireModeID",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Single Shot fire mode (0)",
+    params: [],
+  },
+  function () {
+    return 0;
+  }
+);
+
+expression(
+  firing,
+  "AutomaticFireModeID",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Automatic fire mode (1)",
+    params: [],
+  },
+  function () {
+    return 1;
+  }
+);
+
+expression(
+  firing,
+  "BurstFireModeID",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Burst Fire mode (2)",
+    params: [],
+  },
+  function () {
+    return 2;
   }
 );
 
@@ -689,7 +750,7 @@ action(
     isAsync: false,
     listName: "Set reload type",
     displayText: "{my}: Set reload type to {0}",
-    description: "Set how the weapon reloads. Magazine: Manual reload restores max ammo after reload time. Per-Bullet: Manual reload adds bullets sequentially (total time ÷ max ammo each). Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration (reload time per bullet).",
+    description: "Set how the weapon reloads. Magazine: Manual reload restores max ammo. Per-Bullet: Manual reload adds bullets sequentially. Speed Reload: Manual reload discards remaining ammo and draws from reserves. Passive Reload: Automatic regeneration.",
     params: [
       {
         id: "reloadType",
@@ -889,7 +950,24 @@ expression(
     params: [],
   },
   function () {
-    return this._reloadType || "magazine";
+    const types = ["magazine", "per_bullet", "speed_reload", "passive_reload"];
+    //console.log(this._reloadType && types[this._reloadType]);
+    return types[this._reloadType] || "magazine";
+  }
+);
+
+expression(
+  reload,
+  "ReloadTypeID",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Get the current reload type as a number (0=magazine, 1=per_bullet, 2=speed_reload, 3=passive_reload)",
+    params: [],
+  },
+  function () {
+    return this._reloadType;
   }
 );
 
@@ -904,13 +982,73 @@ expression(
     params: [],
   },
   function () {
-    if (this._reloadType === "per_bullet" && this._maxAmmo > 0) {
+    if (this._reloadType === 1 && this._maxAmmo > 0) { // 1 = per_bullet
       return this._reloadTime / this._maxAmmo;
-    } else if (this._reloadType === "passive_reload") {
+    } else if (this._reloadType === 3) { // 3 = passive_reload
       return this._reloadTime;
     } else {
       return this._reloadTime;
     }
+  }
+);
+
+expression(
+  reload,
+  "ReloadTypeIDMagazine",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Magazine reload type (0)",
+    params: [],
+  },
+  function () {
+    return 0;
+  }
+);
+
+expression(
+  reload,
+  "ReloadTypeIDPerBullet",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Per-Bullet reload type (1)",
+    params: [],
+  },
+  function () {
+    return 1;
+  }
+);
+
+expression(
+  reload,
+  "ReloadTypeIDSpeed",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Speed Reload type (2)",
+    params: [],
+  },
+  function () {
+    return 2;
+  }
+);
+
+expression(
+  reload,
+  "ReloadTypeIDPassive",
+  {
+    highlight: false,
+    deprecated: false,
+    returnType: "number",
+    description: "Returns the ID for Passive Reload type (3)",
+    params: [],
+  },
+  function () {
+    return 3;
   }
 );
 
@@ -923,19 +1061,19 @@ action(
     isAsync: false,
     listName: "Set reserve ammo",
     displayText: "{my}: Set reserve ammo to {0}",
-    description: "Set the reserve ammunition count for Speed Reload (0 = infinite)",
+    description: "Set the reserve ammunition count for Speed Reload (-1 = infinite)",
     params: [
       {
         id: "amount",
         name: "Amount",
-        desc: "Reserve ammo amount (0 for infinite)",
+        desc: "Reserve ammo amount (-1 for infinite)",
         type: "number",
         initialValue: "90",
       },
     ],
   },
   function (amount) {
-    this._reserveAmmo = Math.max(0, Math.floor(amount));
+    this._reserveAmmo = amount < 0 ? -1 : Math.floor(amount);
   }
 );
 
@@ -960,7 +1098,7 @@ action(
     ],
   },
   function (amount) {
-    if (this._reserveAmmo === 0) return; // Infinite reserves, don't add
+    if (this._reserveAmmo === -1) return; // Infinite reserves, don't add
     this._reserveAmmo += Math.max(0, Math.floor(amount));
   }
 );
@@ -972,7 +1110,7 @@ expression(
     highlight: false,
     deprecated: false,
     returnType: "number",
-    description: "Get the current reserve ammo count (0 = infinite reserves)",
+    description: "Get the current reserve ammo count (-1 = infinite reserves)",
     params: [],
   },
   function () {

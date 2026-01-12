@@ -7,14 +7,14 @@ import {
 import _version from "./version.js";
 export const addonType = ADDON_TYPE.BEHAVIOR;
 export const type = PLUGIN_TYPE.OBJECT;
-export const id = "salmanshh_simple_weapon";
-export const name = "Simple Weapon";
+export const id = "salmanshh_weaponkit";
+export const name = "WeaponKit";
 export const version = _version;
 export const minConstructVersion = undefined;
 export const author = "SalmanShh";
 export const website = "https://www.construct.net";
 export const documentation = "https://www.construct.net";
-export const description = "Handle firing, reloading, ammo management, and multiple fire modes without complex events. Perfect for shooters, action games, and any project needing weapon systems.";
+export const description = "Build shooter mechanics in minutes, not hours. Handles firing modes (single/auto/burst), four reload types (magazine/per-bullet/speed/passive), ammo pools, and fire rate cooldowns. Comprehensive triggers and expressions let you create everything from pistols to miniguns without event spaghetti.";
 export const category = ADDON_CATEGORY.OTHER;
 
 export const hasDomside = false;
@@ -86,10 +86,10 @@ export const properties = [
     id: "max_ammo",
     options: {
       initialValue: 30,
-      minValue: 1,
+      minValue: -1,
     },
     name: "Max Ammo",
-    desc: "Maximum ammunition capacity",
+    desc: "Maximum ammunition capacity (set to -1 for infinite ammo)",
   },
   {
     type: PROPERTY_TYPE.INTEGER,
@@ -125,7 +125,7 @@ export const properties = [
       ],
     },
     name: "Fire Mode",
-    desc: "The firing mode of the weapon, Single Shot: One shot per trigger pull; Automatic: Continuous fire while trigger held; Burst Fire: Fires a set number of shots per trigger pull",
+    desc: "Single Shot: Fires one bullet per Fire action call (semi-automatic, pistol/rifle). Automatic: Fires continuously each fire rate interval per Fire action (machine gun, SMG). Burst Fire: Fires multiple shots in quick succession per Fire action (burst rifles, consumes 1 ammo per burst).",
   },
   {
     type: PROPERTY_TYPE.INTEGER,
@@ -160,15 +160,6 @@ export const properties = [
     desc: "Time in seconds. Magazine/Speed: Full reload duration. Per-Bullet: Total time to reload all bullets (divided by max ammo per bullet). Passive: Seconds to regenerate one bullet.",
   },
   {
-    type: PROPERTY_TYPE.CHECK,
-    id: "auto_reload",
-    options: {
-      initialValue: true,
-    },
-    name: "Auto Reload",
-    desc: "Automatically reload when empty and firing",
-  },
-  {
     type: PROPERTY_TYPE.COMBO,
     id: "reload_type",
     options: {
@@ -184,13 +175,12 @@ export const properties = [
     desc: "How the weapon reloads. Magazine: Manual reload, restores max ammo after reload time. Per-Bullet: Manual reload, adds bullets one-by-one (total reload time ÷ max ammo per bullet). Speed Reload: Manual reload, discards remaining ammo and consumes from reserve pool. Passive Reload: Automatic regeneration (reload time = seconds per bullet).",
   },
   {
-    type: PROPERTY_TYPE.INTEGER,
-    id: "reserve_ammo",
+    type: PROPERTY_TYPE.CHECK,
+    id: "auto_reload",
     options: {
-      initialValue: 0,
-      minValue: 0,
+      initialValue: true,
     },
-    name: "Reserve Ammo",
-    desc: "Reserve ammunition pool for Speed Reload (set to 0 for infinite reserves)",
+    name: "Auto Reload",
+    desc: "Automatically reload when empty and firing",
   },
 ];

@@ -3,6 +3,25 @@ import AddonTypeMap from "../../template/addonTypeMap.js";
 
 export default function (parentClass) {
   return class extends parentClass {
+    // Static conversion maps for fire modes and reload types
+    static FIRE_MODE = {
+      "single": 0,
+      "automatic": 1,
+      "auto": 1,
+      "burst": 2
+    };
+    
+    static FIRE_MODE_TO_STRING = ["single", "automatic", "burst"];
+    
+    static RELOAD_TYPE = {
+      "magazine": 0,
+      "per_bullet": 1,
+      "speed_reload": 2,
+      "passive_reload": 3
+    };
+    
+    static RELOAD_TYPE_TO_STRING = ["magazine", "per_bullet", "speed_reload", "passive_reload"];
+
     constructor() {
       super();
       const props = this._getInitProperties() || [];
@@ -11,13 +30,37 @@ export default function (parentClass) {
       this._maxAmmo = Number(props[0]) || 30;
       this._currentAmmo = Number(props[1]) || 30;
       this._fireRate = Number(props[2]) || 0.1;
-      this._fireMode = Number(props[3]) || 0;       // 0=single, 1=auto, 2=burst
+      
+      // Convert fire mode - can be index number or string
+      const fireModeValue = props[3];
+      if (typeof fireModeValue === "number") {
+        // Property returned index, use it directly
+        this._fireMode = fireModeValue;
+      } else {
+        // Property returned string key, convert to number
+        const fireModeStr = String(fireModeValue).toLowerCase();
+        this._fireMode = this.constructor.FIRE_MODE[fireModeStr] ?? 0;
+      }
+      
       this._burstCount = Number(props[4]) || 3;
       this._burstDelay = Number(props[5]) || 0.05;
       this._reloadTime = Number(props[6]) || 2.0;
-      this._autoReload = Boolean(props[7]);
-      this._reloadType = String(props[8]) || "magazine"; // magazine, per_bullet, speed_reload, passive_reload
-      this._reserveAmmo = Number(props[9]) || 0; // 0 = infinite reserves
+      
+      // Convert reload type - can be index number or string, store as number
+      const reloadTypeValue = props[7];
+      if (typeof reloadTypeValue === "number") {
+        // Property returned index, use it directly
+        this._reloadType = reloadTypeValue;
+      } else {
+        // Property returned string key, convert to number
+        const reloadTypeStr = String(reloadTypeValue).toLowerCase();
+        this._reloadType = this.constructor.RELOAD_TYPE[reloadTypeStr] ?? 0;
+      }
+      
+      this._autoReload = Boolean(props[8]);
+      
+      // Reserve ammo defaults to infinite (-1), set via action at runtime
+      this._reserveAmmo = -1;
       
       // Internal state
       this._fireCooldown = 0;
@@ -33,12 +76,10 @@ export default function (parentClass) {
 
     _tick() {
       // Performance optimization: Early return if nothing is active
-      const hasActiveCooldown = this._fireCooldown > 0;
-      const hasActiveReload = this._isReloading;
-      const hasActiveBurst = this._burstShotsRemaining > 0;
-      const hasPassiveReload = this._reloadType === "passive_reload" && this._currentAmmo < this._maxAmmo;
-      
-      if (!hasActiveCooldown && !hasActiveReload && !hasActiveBurst && !hasPassiveReload) {
+      if (this._fireCooldown <= 0 && 
+          !this._isReloading && 
+          this._burstShotsRemaining <= 0 && 
+          !(this._reloadType === 3 && this._currentAmmo < this._maxAmmo)) {
         return;
       }
       
@@ -54,7 +95,7 @@ export default function (parentClass) {
       }
       
       // Handle passive reload - regenerate ammo over time
-      if (this._reloadType === "passive_reload" && this._currentAmmo < this._maxAmmo) {
+      if (this._reloadType === 3 && this._currentAmmo < this._maxAmmo) {
         // Use _reloadTime as seconds per bullet (e.g., 2.0 = 1 bullet every 2 seconds)
         const reloadRate = this._reloadTime > 0 ? (1.0 / this._reloadTime) : 1.0; // bullets per second
         this._passiveReloadAccumulator += reloadRate * dt;
@@ -84,7 +125,7 @@ export default function (parentClass) {
       if (this._isReloading) {
         this._reloadTimer -= dt;
         if (this._reloadTimer <= 0) {
-          if (this._reloadType === "per_bullet") {
+          if (this._reloadType === 1) {
             this._reloadOneBullet();
           } else {
             this._completeReload();
@@ -109,13 +150,20 @@ export default function (parentClass) {
     canFire() {
       if (this._fireCooldown > 0) return false;
       if (this._isReloading) return false;
-      if (this._currentAmmo <= 0) return false;
+      if (this._maxAmmo !== -1 && this._currentAmmo <= 0) return false; // Skip ammo check for infinite ammo
       if (this._burstShotsRemaining > 0) return false;
       return true;
     }
 
     // Fire a single shot
     _fireSingleShot() {
+      // Infinite ammo check
+      if (this._maxAmmo === -1) {
+        this._fireCooldown = this._fireRate;
+        this._trigger("OnFire");
+        return true;
+      }
+      
       if (this._currentAmmo <= 0) {
         this._trigger("OnEmpty");
         if (this._autoReload) {
@@ -136,12 +184,6 @@ export default function (parentClass) {
     // Fire the weapon based on current fire mode
     fire() {
       if (!this.canFire()) {
-        if (this._currentAmmo <= 0 && !this._isReloading) {
-          this._trigger("OnEmpty");
-          if (this._autoReload) {
-            this.startReload();
-          }
-        }
         return false;
       }
       
@@ -160,6 +202,14 @@ export default function (parentClass) {
     // Start burst fire
     _startBurst() {
       if (this._burstShotsRemaining > 0) return false;
+      
+      // Infinite ammo check
+      if (this._maxAmmo === -1) {
+        this._fireCooldown = this._fireRate;
+        this._burstShotsRemaining = this._burstCount;
+        this._fireBurstShot();
+        return true;
+      }
       
       // Check ammo only once for the entire burst
       if (this._currentAmmo <= 0) {
@@ -203,9 +253,9 @@ export default function (parentClass) {
       if (this._currentAmmo >= this._maxAmmo) return false;
       
       // Speed reload: check if we have reserve ammo available
-      if (this._reloadType === "speed_reload") {
-        // If reserves are 0 (infinite) or we have ammo, allow reload
-        if (this._reserveAmmo !== 0 && this._reserveAmmo < this._maxAmmo) {
+      if (this._reloadType === 2) {
+        // If reserves are -1 (infinite) or we have ammo, allow reload
+        if (this._reserveAmmo !== -1 && this._reserveAmmo < this._maxAmmo) {
           return false; // Not enough reserve ammo
         }
       }
@@ -213,7 +263,7 @@ export default function (parentClass) {
       this._isReloading = true;
       
       // For per-bullet reload, divide total reload time by max ammo
-      if (this._reloadType === "per_bullet" && this._maxAmmo > 0) {
+      if (this._reloadType === 1 && this._maxAmmo > 0) {
         this._reloadTimer = this._reloadTime / this._maxAmmo;
       } else {
         this._reloadTimer = this._reloadTime;
@@ -242,11 +292,11 @@ export default function (parentClass) {
 
     // Complete reload
     _completeReload() {
-      if (this._reloadType === "speed_reload") {
+      if (this._reloadType === 2) {
         // Speed reload: discard remaining ammo and reload from reserves
         const ammoNeeded = this._maxAmmo;
         
-        if (this._reserveAmmo === 0) {
+        if (this._reserveAmmo === -1) {
           // Infinite reserves
           this._currentAmmo = this._maxAmmo;
         } else {
@@ -277,27 +327,12 @@ export default function (parentClass) {
 
     // Set fire mode
     setFireMode(mode) {
-      if (typeof mode === "string") {
-        switch (mode.toLowerCase()) {
-          case "single": this._fireMode = 0; break;
-          case "automatic": 
-          case "auto": this._fireMode = 1; break;
-          case "burst": this._fireMode = 2; break;
-          default: this._fireMode = 0;
-        }
-      } else {
-        this._fireMode = mode;
-      }
+      this._fireMode = mode;
     }
 
     // Get fire mode as string
     getFireModeString() {
-      switch (this._fireMode) {
-        case 0: return "single";
-        case 1: return "automatic";
-        case 2: return "burst";
-        default: return "single";
-      }
+      return this.constructor.FIRE_MODE_TO_STRING[this._fireMode] || "single";
     }
 
     // Get reload progress (0-1)
@@ -345,10 +380,10 @@ export default function (parentClass) {
       this._burstDelay = o.burstDelay;
       this._reloadTime = o.reloadTime;
       this._autoReload = o.autoReload;
-      this._reloadType = o.reloadType || "magazine";
+      this._reloadType = o.reloadType ?? 0;
       this._isReloading = o.isReloading;
       this._reloadTimer = o.reloadTimer || 0;
-      this._reserveAmmo = o.reserveAmmo !== undefined ? o.reserveAmmo : 0;
+      this._reserveAmmo = o.reserveAmmo !== undefined ? o.reserveAmmo : -1;
       this._passiveReloadAccumulator = o.passiveReloadAccumulator || 0;
     }
 
@@ -356,19 +391,13 @@ export default function (parentClass) {
       return [{
         title: "$" + this.behaviorType.name,
         properties: [
-          { name: "$reloadtype", value: this._reloadType },
-          { name: "$currentAmmo", value: this._currentAmmo, onedit: v => this._currentAmmo = v },
-          { name: "$maxAmmo", value: this._maxAmmo, onedit: v => this._maxAmmo = v },
-          { name: "$reserveAmmo", value: this._reserveAmmo, onedit: v => this._reserveAmmo = v },
-          { name: "$fireRate", value: this._fireRate, onedit: v => this._fireRate = v },
+          { name: "$currentAmmo", value: this._maxAmmo === -1 ? "Infinite" : this._currentAmmo, onedit: v => this._currentAmmo = v },
+          { name: "$maxAmmo", value: this._maxAmmo === -1 ? "Infinite" : this._maxAmmo, onedit: v => this._maxAmmo = v },
           { name: "$fireMode", value: this.getFireModeString() },
-          { name: "$burstCount", value: this._burstCount, onedit: v => this._burstCount = v },
-          { name: "$burstDelay", value: this._burstDelay, onedit: v => this._burstDelay = v },
-          { name: "$burstShotsRemaining", value: this._burstShotsRemaining },
           { name: "$reloadType", value: this._reloadType },
-          { name: "$reloadTime", value: this._reloadTime, onedit: v => this._reloadTime = v },
           { name: "$isReloading", value: this._isReloading },
           { name: "$reloadProgress", value: this.getReloadProgress() },
+          { name: "$reserveAmmo", value: this._reserveAmmo === -1 ? "Infinite" : this._reserveAmmo, onedit: v => this._reserveAmmo = v },
         ]
       }];
     }
